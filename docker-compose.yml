@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: merchantpay
+      POSTGRES_PASSWORD: merchantpay
+      POSTGRES_DB: merchantpay
+    ports: ["${DB_PORT:-5433}:5432"]  # host 5433 avoids clashing with a local Postgres
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U merchantpay"]
+      interval: 3s
+      retries: 20
+
+  backend:
+    build: ./src/backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://merchantpay:merchantpay@db:5432/merchantpay
+      JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me-in-env}
+      CORS_ORIGINS: '["http://localhost:5173"]'
+      DATA_DIR: /data
+    volumes: ["./data:/data:ro"]
+    ports: ["8000:8000"]
+    depends_on:
+      db: { condition: service_healthy }
+
+volumes:
+  pgdata:

@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.db
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+# Env & secrets
+.env
+.env.*
+!.env.example
+# Challenge workbook is not redistributed (drop it in data/source/ locally)
+data/source/*
+!data/source/.gitkeep
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store

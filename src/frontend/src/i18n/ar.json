@@ -1,0 +1,45 @@
+{
+  "app": { "name": "Merchant Pay", "tagline": "إدارة ذكية لمداخيلك الإلكترونية" },
+  "nav": {
+    "dashboard": "لوحة القيادة", "transactions": "المعاملات", "collections": "التحصيلات",
+    "alerts": "التنبيهات", "simulator": "المحاكي", "insights": "التحليلات", "profile": "الملف التجاري"
+  },
+  "auth": {
+    "title": "الدخول إلى فضاء التاجر", "email": "البريد الإلكتروني", "password": "كلمة المرور",
+    "submit": "تسجيل الدخول", "error": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
+    "demoHint": "حساب تجريبي: demo@merchantpay.test / demo1234", "logout": "تسجيل الخروج"
+  },
+  "filters": {
+    "from": "من", "to": "إلى", "granularity": "التجميع", "day": "يوم", "week": "أسبوع",
+    "month": "شهر", "last7": "7 أيام", "last30": "30 يومًا", "last90": "90 يومًا"
+  },
+  "kpi": {
+    "collected": "التحصيلات المقبولة", "acceptedCount": "المعاملات المقبولة",
+    "acceptanceRate": "نسبة القبول", "avgTicket": "متوسط السلة",
+    "vsPrevious": "مقارنة بالفترة السابقة", "newActivity": "نشاط جديد",
+    "noActivity": "لا يوجد نشاط", "basis": "{{num}} / {{den}} محاولة",
+    "collectedHelp": "مجموع المعاملات ذات الحالة «مقبولة» خلال الفترة. المرفوضة والملغاة والمستردة مستبعدة."
+  },
+  "dashboard": {
+    "trend": "تطور التحصيلات المقبولة", "channels": "التوزيع حسب القناة",
+    "statuses": "التوزيع حسب الحالة", "byCount": "العدد", "byAmount": "المبلغ المقبول",
+    "openLedger": "عرض المعاملات"
+  },
+  "status": { "accepted": "مقبولة", "declined": "مرفوضة", "cancelled": "ملغاة", "refunded": "مستردة" },
+  "channel": {
+    "pos": "جهاز الدفع / POS", "ecommerce": "التجارة الإلكترونية", "mobile_app": "تطبيق الهاتف",
+    "contactless": "بدون تلامس / NFC", "bank_transfer": "تحويل بنكي"
+  },
+  "origin": { "challenge_source": "بيانات المسابقة", "synthetic_demo": "بيانات تجريبية" },
+  "tx": {
+    "search": "ابحث برقم المعاملة…", "id": "الرقم", "date": "التاريخ", "amount": "المبلغ",
+    "channel": "القناة", "status": "الحالة", "category": "الفئة", "origin": "المصدر",
+    "batch": "دفعة الاستيراد", "detail": "تفاصيل المعاملة", "empty": "لا توجد معاملات مطابقة للمرشحات.",
+    "results": "{{count}} نتيجة", "prev": "السابق", "next": "التالي",
+    "page": "صفحة {{page}} / {{pages}}", "reset": "إعادة الضبط", "close": "إغلاق"
+  },
+  "common": {
+    "loading": "جارٍ التحميل…", "error": "حدث خطأ.", "retry": "إعادة المحاولة",
+    "todo": "الوحدة قيد الإنجاز", "todoBody": "هذه الصفحة جزء من خطة الفريق (docs/TEAM_PLAN.md)."
+  }
+}

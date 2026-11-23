@@ -1,0 +1,41 @@
+import i18n from "@/i18n";
+import type { Money } from "@/api/types";
+
+const locale = () => (i18n.language === "ar" ? "ar-DZ" : "fr-DZ");
+
+/** Display only. All arithmetic happens server-side in integer centimes. */
+export function formatMoney(m: Money | null | undefined): string {
+  if (!m) return "—";
+  return new Intl.NumberFormat(locale(), { style: "currency", currency: "DZD" }).format(Number(m.amount));
+}
+
+export function formatCompactDzd(units: number): string {
+  return new Intl.NumberFormat(locale(), { notation: "compact", maximumFractionDigits: 1 }).format(units);
+}
+
+export function formatNumber(n: number): string {
+  return new Intl.NumberFormat(locale()).format(n);
+}
+
+export function formatPct(v: number | null | undefined, signed = false): string {
+  if (v === null || v === undefined) return "—";
+  return new Intl.NumberFormat(locale(), {
+    style: "percent",
+    maximumFractionDigits: 1,
+    signDisplay: signed ? "exceptZero" : "auto",
+  }).format(v);
+}
+
+/** Timestamps are merchant-local (Africa/Algiers) without offset: format as wall-clock time. */
+export function formatDateTime(iso: string): string {
+  return new Intl.DateTimeFormat(locale(), { dateStyle: "medium", timeStyle: "short" }).format(new Date(iso));
+}
+
+export function formatDate(isoDate: string): string {
+  return new Intl.DateTimeFormat(locale(), { day: "2-digit", month: "short" }).format(new Date(`${isoDate}T00:00:00`));
+}
+
+export function toIsoDate(d: Date): string {
+  const p = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}

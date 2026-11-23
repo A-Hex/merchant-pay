@@ -1,0 +1,45 @@
+{
+  "app": { "name": "Merchant Pay", "tagline": "Pilotage intelligent de vos encaissements" },
+  "nav": {
+    "dashboard": "Tableau de bord", "transactions": "Transactions", "collections": "Encaissements",
+    "alerts": "Alertes", "simulator": "Simulateur", "insights": "Analyses", "profile": "Profil"
+  },
+  "auth": {
+    "title": "Connexion à votre espace marchand", "email": "Adresse e-mail", "password": "Mot de passe",
+    "submit": "Se connecter", "error": "E-mail ou mot de passe incorrect",
+    "demoHint": "Compte démo : demo@merchantpay.test / demo1234", "logout": "Déconnexion"
+  },
+  "filters": {
+    "from": "Du", "to": "Au", "granularity": "Granularité", "day": "Jour", "week": "Semaine",
+    "month": "Mois", "last7": "7 j", "last30": "30 j", "last90": "90 j"
+  },
+  "kpi": {
+    "collected": "Encaissements acceptés", "acceptedCount": "Transactions acceptées",
+    "acceptanceRate": "Taux d'acceptation", "avgTicket": "Panier moyen",
+    "vsPrevious": "vs période précédente", "newActivity": "Nouvelle activité",
+    "noActivity": "Aucune activité", "basis": "{{num}} / {{den}} tentatives",
+    "collectedHelp": "Somme des transactions au statut Acceptée sur la période. Refusées, annulées et remboursées sont exclues."
+  },
+  "dashboard": {
+    "trend": "Évolution des encaissements acceptés", "channels": "Répartition par canal",
+    "statuses": "Répartition par statut", "byCount": "Nombre", "byAmount": "Montant accepté",
+    "openLedger": "Voir les transactions"
+  },
+  "status": { "accepted": "Acceptée", "declined": "Refusée", "cancelled": "Annulée", "refunded": "Remboursée" },
+  "channel": {
+    "pos": "TPE / POS", "ecommerce": "E-commerce", "mobile_app": "Application mobile",
+    "contactless": "Sans contact / NFC", "bank_transfer": "Virement bancaire"
+  },
+  "origin": { "challenge_source": "Source challenge", "synthetic_demo": "Démo synthétique" },
+  "tx": {
+    "search": "Rechercher un ID de transaction…", "id": "ID", "date": "Date", "amount": "Montant",
+    "channel": "Canal", "status": "Statut", "category": "Catégorie", "origin": "Origine",
+    "batch": "Lot d'import", "detail": "Détail de la transaction", "empty": "Aucune transaction ne correspond aux filtres.",
+    "results": "{{count}} résultat(s)", "prev": "Précédent", "next": "Suivant",
+    "page": "Page {{page}} / {{pages}}", "reset": "Réinitialiser", "close": "Fermer"
+  },
+  "common": {
+    "loading": "Chargement…", "error": "Une erreur est survenue.", "retry": "Réessayer",
+    "todo": "Module en construction", "todoBody": "Cette page fait partie du plan d'équipe (docs/TEAM_PLAN.md)."
+  }
+}
