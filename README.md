@@ -299,6 +299,7 @@ Run these from the repository root.
 | iyyad2024 | [github.com/iyyad2024](https://github.com/iyyad2024) |
 | houssem2055 | [github.com/houssem2055](https://github.com/houssem2055) |
 | mehdibidjed | [github.com/mehdibidjed](https://github.com/mehdibidjed) |
+| A-Hex | [github.com/A-Hex](https://github.com/A-Hex) |
 
 ### Workflow
 
