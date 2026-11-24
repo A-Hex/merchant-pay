@@ -3,6 +3,11 @@ import type { components } from "./schema";
 
 type S = components["schemas"];
 export type Me = S["MeOut"];
+export type Merchant = S["MerchantOut"];
+export type MerchantUpdate = S["MerchantUpdateIn"];
+export type DeclineInsight = S["DeclineInsightOut"];
+export type DeclineSignal = S["DeclineSignalOut"];
+export type Period = S["PeriodOut"];
 export type Dashboard = S["DashboardOut"];
 export type Kpis = S["KpiOut"];
 export type Change = S["ChangeOut"];
@@ -23,3 +28,5 @@ export type CollectionsSummary = S["CollectionsSummaryOut"];
 
 export const CHANNELS: Channel[] = ["pos", "ecommerce", "mobile_app", "contactless", "bank_transfer"];
 export const STATUSES: TransactionStatus[] = ["accepted", "declined", "cancelled", "refunded"];
+export const WEEKDAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"] as const;
+export type Weekday = (typeof WEEKDAYS)[number];

@@ -1,4 +1,7 @@
+import hashlib
+import hmac
 from datetime import date
+from functools import cached_property
 
 import pytest
 from fastapi.testclient import TestClient
@@ -6,7 +9,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.container import get_db, get_password_hasher, get_today
+from app.container import (
+    get_db,
+    get_password_hasher,
+    get_today,
+    reset_login_throttle,
+)
 from app.contexts.ledger.application.import_transactions import ImportTransactions
 from app.contexts.ledger.infrastructure.sql_transaction_repository import (
     SqlMerchantRegistry,
@@ -18,6 +26,30 @@ from app.seed.accounts import ensure_merchant, ensure_user
 from app.shared.domain.enums import DataOrigin
 
 FROZEN_TODAY = date(2026, 11, 20)
+
+
+class FastTestHasher:
+    """Cheap stand-in for Argon2 in HTTP fixtures.
+
+    These tests exercise authentication *logic* (throttling, claims, scoping), not the
+    KDF cost, and Argon2 dominates the fixture runtime. Argon2 itself is covered by a
+    dedicated unit test (tests/unit/test_config_and_tokens.py).
+    """
+
+    def hash(self, password: str) -> str:
+        return "test-sha256$" + hashlib.sha256(password.encode()).hexdigest()
+
+    def verify(self, password: str, password_hash: str) -> bool:
+        return hmac.compare_digest(self.hash(password), password_hash)
+
+    @cached_property
+    def decoy_hash(self) -> str:
+        return self.hash("timing-decoy")
+
+
+@pytest.fixture(scope="session")
+def fast_hasher() -> FastTestHasher:
+    return FastTestHasher()
 
 
 def _row(tid, merchant, when, amount, status, channel="TPE / POS"):
@@ -46,7 +78,7 @@ def engine():
 
 
 @pytest.fixture
-def seeded(engine):
+def seeded(engine, fast_hasher):
     with Session(engine) as s, s.begin():
         ensure_merchant(s, "M1", "Merchant One", "Retail")
         ensure_merchant(s, "M2", "Merchant Two", "Retail")
@@ -54,14 +86,23 @@ def seeded(engine):
             enumerate(FIXTURE_ROWS, start=2), source_name="fixture",
             data_origin=DataOrigin.CHALLENGE_SOURCE)
         assert report.ok, report.errors
-        hasher = get_password_hasher()
+        hasher = fast_hasher
         ensure_user(s, hasher, "one@test.dz", "pw-one", "M1")
         ensure_user(s, hasher, "two@test.dz", "pw-two", "M2")
+        ensure_user(s, hasher, "staff@test.dz", "pw-staff", "M1", role="staff")
     return engine
 
 
+@pytest.fixture(autouse=True)
+def _isolated_login_throttle():
+    """In-process counters must not leak between tests."""
+    reset_login_throttle()
+    yield
+    reset_login_throttle()
+
+
 @pytest.fixture
-def client(seeded):
+def client(seeded, fast_hasher):
     app = create_app()
     factory = sessionmaker(bind=seeded, expire_on_commit=False)
 
@@ -78,6 +119,7 @@ def client(seeded):
 
     app.dependency_overrides[get_db] = override_db
     app.dependency_overrides[get_today] = lambda: FROZEN_TODAY
+    app.dependency_overrides[get_password_hasher] = lambda: fast_hasher
     with TestClient(app) as c:
         yield c
 

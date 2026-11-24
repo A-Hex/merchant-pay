@@ -124,6 +124,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/insights/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Decline Insight */
+        get: operations["decline_insight_api_v1_insights_decline_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/alerts": {
         parameters: {
             query?: never;
@@ -216,8 +233,31 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Health */
+        /**
+         * Health
+         * @description Liveness: the process is up. Cheap, no dependencies.
+         */
         get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Ready
+         * @description Readiness: the process can actually serve traffic (database reachable).
+         */
+        get: operations["ready_ready_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -347,6 +387,15 @@ export interface components {
             /** By Status */
             by_status: components["schemas"]["StatusSummaryOut"][];
         };
+        /** CredibleIntervalOut */
+        CredibleIntervalOut: {
+            /** Lower */
+            lower: number | null;
+            /** Upper */
+            upper: number | null;
+            /** Level */
+            level: number;
+        };
         /** DashboardOut */
         DashboardOut: {
             period: components["schemas"]["PeriodOut"];
@@ -366,6 +415,33 @@ export interface components {
          * @enum {string}
          */
         DataOrigin: "challenge_source" | "synthetic_demo";
+        /** DeclineInsightOut */
+        DeclineInsightOut: {
+            period: components["schemas"]["PeriodOut"];
+            signal: components["schemas"]["DeclineSignalOut"];
+        };
+        /** DeclineSignalOut */
+        DeclineSignalOut: {
+            /** Accepted */
+            accepted: number;
+            /** Declined */
+            declined: number;
+            /** Attempts */
+            attempts: number;
+            observed_rate: components["schemas"]["RateOut"];
+            /** Posterior Mean */
+            posterior_mean: number | null;
+            credible_interval: components["schemas"]["CredibleIntervalOut"];
+            prior: components["schemas"]["PriorOut"];
+            /** Min Attempts */
+            min_attempts: number;
+            /** Sample Gate Met */
+            sample_gate_met: boolean;
+            /** Method */
+            method: string;
+            /** Limitations */
+            limitations: string;
+        };
         /** EvaluationOut */
         EvaluationOut: {
             /** Created */
@@ -428,6 +504,20 @@ export interface components {
             operating_days: string[];
             monthly_goal: components["schemas"]["MoneyOut"] | null;
         };
+        /**
+         * MerchantUpdateIn
+         * @description Strict partial update: unknown fields are rejected instead of silently ignored.
+         */
+        MerchantUpdateIn: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Operating Days */
+            operating_days?: ("mon" | "tue" | "wed" | "thu" | "fri" | "sat" | "sun")[] | null;
+            /** Monthly Goal Centimes */
+            monthly_goal_centimes?: number | null;
+        };
         /** MoneyOut */
         MoneyOut: {
             /** Amount */
@@ -452,6 +542,18 @@ export interface components {
              * Format: date
              */
             date_to: string;
+        };
+        /** PriorOut */
+        PriorOut: {
+            /** Alpha */
+            alpha: number;
+            /** Beta */
+            beta: number;
+            /**
+             * Family
+             * @default Jeffreys Beta(0.5, 0.5)
+             */
+            family: string;
         };
         /** ProjectionOut */
         ProjectionOut: {
@@ -690,9 +792,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
+                "application/json": components["schemas"]["MerchantUpdateIn"];
             };
         };
         responses: {
@@ -846,6 +946,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CollectionsSummaryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    decline_insight_api_v1_insights_decline_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+                min_attempts?: number;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeclineInsightOut"];
                 };
             };
             /** @description Validation Error */
@@ -1043,6 +1178,26 @@ export interface operations {
                     "application/json": {
                         [key: string]: string;
                     };
+                };
+            };
+        };
+    };
+    ready_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
         };

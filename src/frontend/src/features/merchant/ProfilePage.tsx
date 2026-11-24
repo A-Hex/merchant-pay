@@ -1,92 +1,174 @@
-import { useState, useRef } from "react";
-import { api } from "@/api/client";
+import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { ApiError } from "@/api/client";
+import { WEEKDAYS, type Merchant, type Weekday } from "@/api/types";
+import { Button, Card, ErrorState, Spinner } from "@/components/ui";
+import { useMe } from "@/features/auth/api";
+import { useUpdateProfile } from "./api";
 
-export const ProfilePage = () => {
+const inputClass =
+  "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm " +
+  "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 " +
+  "disabled:bg-slate-50 disabled:text-slate-500";
+
+function toGoalInput(centimes: number | null | undefined): string {
+  return centimes === null || centimes === undefined ? "" : (centimes / 100).toFixed(2);
+}
+
+function ProfileForm({ merchant, canEdit }: { merchant: Merchant; canEdit: boolean }) {
   const { t } = useTranslation();
-  const [name, setName] = useState<string>("");
-  const [category, setCategory] = useState<string>("");
-  const [operatingDays, setOperatingDays] = useState<string>("sun,mon,tue,wed,thu,sat");
-  const [monthlyGoal, setMonthlyGoal] = useState<number | null>(null);
-  const [saving, setSaving] = useState(false);
-  const submitRef = useRef<HTMLFormElement>(null);
+  const update = useUpdateProfile();
+  const [displayName, setDisplayName] = useState(merchant.display_name);
+  const [category, setCategory] = useState(merchant.category);
+  const [days, setDays] = useState<Weekday[]>(
+    WEEKDAYS.filter((d) => merchant.operating_days.includes(d)),
+  );
+  const [goal, setGoal] = useState(toGoalInput(merchant.monthly_goal?.centimes));
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    try {
-      await api("/merchant/me", {
-        method: "PATCH",
-        body: JSON.stringify({
-          display_name: name,
-          category,
-          operating_days: operatingDays.split(",").filter(Boolean),
-          monthly_goal_centimes: monthlyGoal ? Math.round(monthlyGoal * 100) : null,
-        }),
-      } as RequestInit);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSaving(false);
+  const toggleDay = (day: Weekday) =>
+    setDays((current) =>
+      current.includes(day) ? current.filter((d) => d !== day) : [...current, day],
+    );
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    const errors: Record<string, string> = {};
+    if (!displayName.trim()) errors.displayName = t("profile.required");
+    if (!category.trim()) errors.category = t("profile.required");
+    if (days.length === 0) errors.days = t("profile.at_least_one_day");
+
+    const goalValue = goal.trim() === "" ? null : Math.round(Number(goal) * 100);
+    if (goalValue !== null && (!Number.isFinite(goalValue) || goalValue < 0)) {
+      errors.goal = t("profile.goal_invalid");
     }
+    setFieldErrors(errors);
+    if (Object.keys(errors).length > 0) return;
+
+    update.mutate({
+      display_name: displayName.trim(),
+      category: category.trim(),
+      operating_days: days,
+      monthly_goal_centimes: goalValue,
+    });
   };
 
+  const forbidden = update.error instanceof ApiError && update.error.status === 403;
+
   return (
-    <form ref={submitRef} onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={submit} noValidate className="space-y-5">
+      {!canEdit && (
+        <p className="rounded-lg bg-amber-50 p-3 text-sm text-amber-800 ring-1 ring-amber-200">
+          {t("profile.read_only")}
+        </p>
+      )}
+
       <div>
-        <label className="block text-sm font-medium mb-1">{t("nav.profile")}</label>
+        <label htmlFor="profile-name" className="mb-1 block text-sm font-medium text-slate-700">
+          {t("profile.display_name")}
+        </label>
         <input
-          type="text"
-          value={name || ""}
-          onChange={(e) => setName(e.target.value)}
-          placeholder={t("profile.display_name")}
-          className="w-full rounded border px-3 py-2 focus:outline-none focus:border-primary"
+          id="profile-name" className={inputClass} value={displayName} maxLength={200}
+          disabled={!canEdit} autoComplete="organization"
+          aria-invalid={Boolean(fieldErrors.displayName)}
+          aria-describedby="profile-name-error"
+          onChange={(e) => setDisplayName(e.target.value)}
         />
+        <p id="profile-name-error" role={fieldErrors.displayName ? "alert" : undefined}
+          className="mt-1 text-xs text-rose-700">
+          {fieldErrors.displayName ?? t("profile.display_name_hint")}
+        </p>
       </div>
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium mb-1">{t("profile.category")}</label>
-          <select
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            className="w-full rounded border px-3 py-2 focus:outline-none focus:border-primary"
-          >
-            <option value="ecommerce">{t("profile.category.ecommerce")}</option>
-            <option value="mobile_app">{t("profile.category.mobile_app")}</option>
-            <option value="pos">{t("profile.category.pos")}</option>
-            <option value="bank_transfer">{t("profile.category.bank_transfer")}</option>
-          </select>
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">{t("profile.operating_days")}</label>
-          <select
-            value={operatingDays}
-            onChange={(e) => setOperatingDays(e.target.value)}
-            className="w-full rounded border px-3 py-2 focus:outline-none focus:border-primary"
-          >
-            <option value="sun,mon,tue,wed,thu,sat">{t("profile.operating_days.all")}</option>
-            <option value="mon-fri">{t("profile.operating_days.weekdays")}</option>
-            <option value="tue,thu,sat">{t("profile.operating_days.partial")}</option>
-          </select>
-        </div>
-      </div>
+
       <div>
-        <label className="block text-sm font-medium mb-1">{t("profile.monthly_goal")}</label>
+        <label htmlFor="profile-category" className="mb-1 block text-sm font-medium text-slate-700">
+          {t("profile.category")}
+        </label>
         <input
-          type="number"
-          value={monthlyGoal ?? ""}
-          onChange={(e) => setMonthlyGoal(parseFloat(e.target.value) || null)}
-          placeholder={t("profile.monthly_goal_placeholder")}
-          className="w-full rounded border px-3 py-2 focus:outline-none focus:border-primary"
+          id="profile-category" className={inputClass} value={category} maxLength={100}
+          disabled={!canEdit}
+          aria-invalid={Boolean(fieldErrors.category)}
+          aria-describedby="profile-category-error"
+          onChange={(e) => setCategory(e.target.value)}
         />
+        <p id="profile-category-error" role={fieldErrors.category ? "alert" : undefined}
+          className="mt-1 text-xs text-slate-500">
+          {fieldErrors.category ?? t("profile.category_hint")}
+        </p>
       </div>
-      <button
-        type="submit"
-        disabled={saving}
-        className="w-full rounded border px-3 py-2 focus:outline-none focus:border-primary bg-primary text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        {saving ? "Enregistrement…" : t("profile.save")}
-      </button>
+
+      <fieldset disabled={!canEdit}>
+        <legend className="mb-1 block text-sm font-medium text-slate-700">
+          {t("profile.operating_days")}
+        </legend>
+        <div className="flex flex-wrap gap-2">
+          {WEEKDAYS.map((day) => (
+            <label key={day}
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm has-checked:border-brand-600 has-checked:bg-brand-50">
+              <input type="checkbox" className="accent-brand-700" checked={days.includes(day)}
+                onChange={() => toggleDay(day)} />
+              {t(`profile.days.${day}`)}
+            </label>
+          ))}
+        </div>
+        <p role={fieldErrors.days ? "alert" : undefined} className="mt-1 text-xs text-rose-700">
+          {fieldErrors.days ?? t("profile.operating_days_hint")}
+        </p>
+      </fieldset>
+
+      <div>
+        <label htmlFor="profile-goal" className="mb-1 block text-sm font-medium text-slate-700">
+          {t("profile.monthly_goal")}
+        </label>
+        <div className="flex items-center gap-2">
+          <input
+            id="profile-goal" type="number" inputMode="decimal" min="0" step="0.01"
+            className={inputClass} value={goal} disabled={!canEdit}
+            placeholder={t("profile.monthly_goal_placeholder")}
+            aria-invalid={Boolean(fieldErrors.goal)}
+            aria-describedby="profile-goal-error"
+            onChange={(e) => setGoal(e.target.value)}
+          />
+          <span className="text-sm text-slate-500">DZD</span>
+        </div>
+        <p id="profile-goal-error" role={fieldErrors.goal ? "alert" : undefined}
+          className="mt-1 text-xs text-slate-500">
+          {fieldErrors.goal ?? t("profile.monthly_goal_hint")}
+        </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="submit" disabled={!canEdit || update.isPending}>
+          {update.isPending ? t("profile.saving") : t("profile.save")}
+        </Button>
+        <span role="status" aria-live="polite" className="text-sm">
+          {update.isSuccess && <span className="text-emerald-700">{t("profile.saved")}</span>}
+          {update.isError && (
+            <span className="text-rose-700">
+              {forbidden ? t("profile.read_only") : t("profile.save_error")}
+            </span>
+          )}
+        </span>
+      </div>
     </form>
   );
-};
+}
+
+export function ProfilePage() {
+  const { t } = useTranslation();
+  const me = useMe();
+
+  return (
+    <Card title={t("profile.title")}>
+      <p className="mb-4 text-sm text-slate-600">{t("profile.intro")}</p>
+      {me.isPending ? (
+        <Spinner />
+      ) : me.isError ? (
+        <ErrorState onRetry={() => me.refetch()} />
+      ) : (
+        <ProfileForm key={me.data.merchant.merchant_id} merchant={me.data.merchant}
+          canEdit={me.data.role === "owner"} />
+      )}
+    </Card>
+  );
+}

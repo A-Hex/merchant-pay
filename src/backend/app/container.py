@@ -4,7 +4,7 @@ Routers depend on these providers via FastAPI Depends(). Tests swap any of them 
 app.dependency_overrides[provider] = lambda: Fake(...).
 """
 
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from datetime import date, datetime
 from functools import lru_cache
 from zoneinfo import ZoneInfo
@@ -22,6 +22,7 @@ from app.contexts.alerts.application.manage_alerts import (
 from app.contexts.alerts.infrastructure.sql_alert_repository import SqlAlertRepository
 from app.contexts.analytics.application.get_collections import GetCollectionsSummary
 from app.contexts.analytics.application.get_dashboard import GetDashboard
+from app.contexts.analytics.application.get_decline_signal import GetDeclineSignal
 from app.contexts.identity.application.use_cases import (
     Authenticate,
     GetMe,
@@ -39,9 +40,10 @@ from app.contexts.ledger.infrastructure.sql_transaction_repository import SqlTra
 from app.contexts.simulation.application.run_simulation import RunGrowthSimulation
 from app.contexts.simulation.infrastructure.sql_scenario_repository import SqlScenarioRunRepository
 from app.db.session import make_engine, make_session_factory
+from app.shared.audit import SqlAuditRepository
+from app.shared.domain.errors import Forbidden
 from app.shared.domain.merchant_scope import MerchantScope
-
-SESSION_COOKIE = "mp_session"
+from app.shared.security.rate_limit import SlidingWindowLoginThrottle
 
 
 # ---- infrastructure --------------------------------------------------------
@@ -76,17 +78,44 @@ def get_password_hasher() -> Argon2PasswordHasher:
 
 
 def get_token_service(settings: Settings = Depends(get_settings)) -> JwtTokenService:
-    return JwtTokenService(settings.jwt_secret, settings.jwt_ttl_minutes)
+    return JwtTokenService(settings.jwt_secret, settings.jwt_ttl_minutes,
+                           settings.jwt_issuer, settings.jwt_audience)
+
+
+_login_throttle: SlidingWindowLoginThrottle | None = None
+
+
+def get_login_throttle(settings: Settings = Depends(get_settings)) -> SlidingWindowLoginThrottle:
+    """Process-wide limiter so counters survive across requests.
+
+    Multi-worker deployments must back this port with shared storage (see docs/security.md).
+    """
+    global _login_throttle
+    if _login_throttle is None:
+        _login_throttle = SlidingWindowLoginThrottle(
+            max_attempts=settings.login_max_attempts,
+            window_seconds=settings.login_window_seconds,
+            lockout_seconds=settings.login_lockout_seconds,
+        )
+    return _login_throttle
+
+
+def reset_login_throttle() -> None:
+    """Test hook: clear in-process counters between cases."""
+    global _login_throttle
+    _login_throttle = None
 
 
 # ---- identity ----------------------------------------------------------------
 def get_authenticate(db: Session = Depends(get_db), hasher=Depends(get_password_hasher),
-                     tokens=Depends(get_token_service)) -> Authenticate:
-    return Authenticate(SqlUserRepository(db), hasher, tokens)
+                     tokens=Depends(get_token_service),
+                     throttle=Depends(get_login_throttle)) -> Authenticate:
+    return Authenticate(SqlUserRepository(db), hasher, tokens, throttle)
 
 
-def get_current_user_id(request: Request, tokens=Depends(get_token_service)) -> int:
-    token = request.cookies.get(SESSION_COOKIE)
+def get_current_user_id(request: Request, settings: Settings = Depends(get_settings),
+                        tokens=Depends(get_token_service)) -> int:
+    token = request.cookies.get(settings.cookie_name)
     user_id = tokens.decode(token) if token else None
     if user_id is None:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Not authenticated")
@@ -116,6 +145,22 @@ def get_update_merchant_profile(
     return UpdateMerchantProfile(merchants)
 
 
+def require_roles(*roles: str) -> Callable[..., MerchantScope]:
+    """RBAC dependency factory: 403 unless the resolved scope has one of ``roles``."""
+    allowed = {r.lower() for r in roles}
+
+    def dependency(scope: MerchantScope = Depends(get_scope)) -> MerchantScope:
+        if scope.role not in allowed:
+            raise Forbidden("Insufficient role for this action")
+        return scope
+
+    return dependency
+
+
+def get_audit_repository(db: Session = Depends(get_db)) -> SqlAuditRepository:
+    return SqlAuditRepository(db)
+
+
 # ---- ledger -------------------------------------------------------------------
 def get_transaction_repository(db: Session = Depends(get_db)) -> SqlTransactionRepository:
     return SqlTransactionRepository(db)
@@ -139,6 +184,10 @@ def get_collections_summary(
     repo=Depends(get_transaction_repository),
 ) -> GetCollectionsSummary:
     return GetCollectionsSummary(repo)
+
+
+def get_decline_signal(repo=Depends(get_transaction_repository)) -> GetDeclineSignal:
+    return GetDeclineSignal(repo)
 
 
 # ---- alerts -------------------------------------------------------------------

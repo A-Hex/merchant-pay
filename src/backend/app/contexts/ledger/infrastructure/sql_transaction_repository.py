@@ -53,7 +53,11 @@ class SqlTransactionRepository:
         if flt.channels:
             stmt = stmt.where(TransactionRow.channel.in_([c.value for c in flt.channels]))
         if flt.query:
-            stmt = stmt.where(TransactionRow.transaction_id.ilike(f"%{flt.query.strip()}%"))
+            # Escape LIKE metacharacters: a user-supplied '%' must be a literal, not a
+            # wildcard that turns the search into a full scan.
+            needle = (flt.query.strip().replace("\\", "\\\\")
+                      .replace("%", "\\%").replace("_", "\\_"))
+            stmt = stmt.where(TransactionRow.transaction_id.ilike(f"%{needle}%", escape="\\"))
         total = self._s.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         rows = self._s.scalars(
             stmt.order_by(TransactionRow.occurred_at.desc(), TransactionRow.transaction_id)

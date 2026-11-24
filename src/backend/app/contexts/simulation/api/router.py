@@ -2,18 +2,26 @@ from datetime import date
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
-from app.container import get_run_growth_simulation, get_scope, get_today
+from app.container import (
+    get_audit_repository,
+    get_run_growth_simulation,
+    get_scope,
+    get_today,
+)
 from app.contexts.simulation.application.run_simulation import RunGrowthSimulation
 from app.contexts.simulation.domain.growth import Assumptions
 from app.shared.api.schemas import MoneyOut, PeriodOut, period_from_query
+from app.shared.audit import SqlAuditRepository
 from app.shared.domain.merchant_scope import MerchantScope
 
 router = APIRouter(prefix="/simulations", tags=["simulation"])
 
 
 class SimulationIn(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     baseline_from: date | None = None
     baseline_to: date | None = None
     volume_growth: float = Field(default=0.15, ge=-1, le=10)
@@ -60,6 +68,7 @@ def growth(
     scope: MerchantScope = Depends(get_scope),
     today: date = Depends(get_today),
     uc: RunGrowthSimulation = Depends(get_run_growth_simulation),
+    audit: SqlAuditRepository = Depends(get_audit_repository),
 ) -> SimulationOut:
     assumptions = Assumptions(
         volume_growth=Decimal(str(body.volume_growth)),
@@ -67,6 +76,7 @@ def growth(
         ticket_change=Decimal(str(body.ticket_change)),
     )
     r = uc.execute(scope, period_from_query(body.baseline_from, body.baseline_to, today), assumptions)
+    audit.record(scope.user_id, "simulation.growth_run", f"merchant:{scope.merchant_id}")
     k, p = r.baseline_kpis, r.projection
     return SimulationOut(
         baseline=BaselineOut(

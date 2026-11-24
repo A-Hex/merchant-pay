@@ -1,11 +1,19 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 
-from app.container import get_collections_summary, get_dashboard_uc, get_scope, get_today
+from app.container import (
+    get_collections_summary,
+    get_dashboard_uc,
+    get_decline_signal,
+    get_scope,
+    get_today,
+)
 from app.contexts.analytics.application.get_collections import GetCollectionsSummary
 from app.contexts.analytics.application.get_dashboard import GetDashboard
+from app.contexts.analytics.application.get_decline_signal import GetDeclineSignal
+from app.contexts.analytics.domain.decline_signal import DeclineSignal
 from app.contexts.analytics.domain.kpis import Granularity, KpiSnapshot
 from app.contexts.analytics.domain.period_comparison import ChangeKind, PeriodChange
 from app.shared.api.schemas import MoneyOut, PeriodOut, RateOut, period_from_query
@@ -172,3 +180,68 @@ def collections_summary(
             for c in s.by_status
         ],
     )
+
+
+# ---- insights (module 04): decline rate with an explicit uncertainty band --------------
+insights_router = APIRouter(prefix="/insights", tags=["insights"])
+
+
+class CredibleIntervalOut(BaseModel):
+    lower: float | None
+    upper: float | None
+    level: float
+
+
+class PriorOut(BaseModel):
+    alpha: float
+    beta: float
+    family: str = "Jeffreys Beta(0.5, 0.5)"
+
+
+class DeclineSignalOut(BaseModel):
+    accepted: int
+    declined: int
+    attempts: int
+    observed_rate: RateOut
+    posterior_mean: float | None  # display only, 0..1
+    credible_interval: CredibleIntervalOut
+    prior: PriorOut
+    min_attempts: int
+    sample_gate_met: bool
+    method: str
+    limitations: str
+
+    @classmethod
+    def of(cls, s: DeclineSignal) -> "DeclineSignalOut":
+        return cls(
+            accepted=s.accepted, declined=s.declined, attempts=s.attempts,
+            observed_rate=RateOut.of(s.observed_rate),
+            posterior_mean=float(s.posterior_mean) if s.posterior_mean is not None else None,
+            credible_interval=CredibleIntervalOut(
+                lower=float(s.interval.lower) if s.interval.lower is not None else None,
+                upper=float(s.interval.upper) if s.interval.upper is not None else None,
+                level=float(s.interval.level),
+            ),
+            prior=PriorOut(alpha=float(s.prior_alpha), beta=float(s.prior_beta)),
+            min_attempts=s.min_attempts, sample_gate_met=s.sample_gate_met,
+            method=s.method, limitations=s.limitations,
+        )
+
+
+class DeclineInsightOut(BaseModel):
+    period: PeriodOut
+    signal: DeclineSignalOut
+
+
+@insights_router.get("/decline", response_model=DeclineInsightOut)
+def decline_insight(
+    date_from: date | None = None,
+    date_to: date | None = None,
+    min_attempts: int = Query(default=20, ge=1, le=10_000),
+    scope: MerchantScope = Depends(get_scope),
+    today: date = Depends(get_today),
+    uc: GetDeclineSignal = Depends(get_decline_signal),
+) -> DeclineInsightOut:
+    insight = uc.execute(scope, period_from_query(date_from, date_to, today), min_attempts)
+    return DeclineInsightOut(period=PeriodOut.of(insight.period),
+                             signal=DeclineSignalOut.of(insight.signal))

@@ -2,26 +2,61 @@ from dataclasses import dataclass
 
 from app.contexts.identity.application.ports import (
     AccessRepository,
+    LoginThrottle,
     MerchantRepository,
     PasswordHasher,
     TokenService,
     UserRepository,
 )
-from app.contexts.identity.domain.model import Merchant, MerchantAccess, User
-from app.shared.domain.errors import Forbidden, InvalidCredentials, NotFound
+from app.contexts.identity.domain.model import (
+    Merchant,
+    MerchantAccess,
+    MerchantChanges,
+    Role,
+    User,
+    can_edit_profile,
+)
+from app.shared.domain.errors import DomainError, Forbidden, InvalidCredentials, NotFound
 from app.shared.domain.merchant_scope import MerchantScope
-from app.shared.domain.money import Money
+
+
+@dataclass(frozen=True, slots=True)
+class IssuedSession:
+    token: str
+    user_id: int
 
 
 class Authenticate:
-    def __init__(self, users: UserRepository, hasher: PasswordHasher, tokens: TokenService) -> None:
-        self._users, self._hasher, self._tokens = users, hasher, tokens
+    """Verify credentials and mint a session token.
 
-    def execute(self, email: str, password: str) -> str:
-        user = self._users.get_by_email(email.strip().lower())
-        if user is None or not user.is_active or not self._hasher.verify(password, user.password_hash):
+    * Per-IP/per-account throttling runs first, so brute force is stopped before hashing.
+    * A missing account is verified against a decoy hash, so a wrong email and a wrong
+      password take the same time (no account enumeration through latency).
+    * The error message is identical for every failure mode.
+    """
+
+    def __init__(self, users: UserRepository, hasher: PasswordHasher, tokens: TokenService,
+                 throttle: LoginThrottle | None = None) -> None:
+        self._users, self._hasher, self._tokens = users, hasher, tokens
+        self._throttle = throttle
+
+    def execute(self, email: str, password: str, client_ip: str = "unknown") -> IssuedSession:
+        normalized = email.strip().lower()
+        if self._throttle:
+            self._throttle.ensure_allowed(client_ip, normalized)
+
+        user = self._users.get_by_email(normalized)
+        password_hash = user.password_hash if user is not None else self._hasher.decoy_hash
+        password_ok = self._hasher.verify(password, password_hash)
+
+        if user is None or not user.is_active or not password_ok:
+            if self._throttle:
+                self._throttle.record_failure(client_ip, normalized)
             raise InvalidCredentials()  # same error whatever failed: no account enumeration
-        return self._tokens.issue(user.id)
+
+        if self._throttle:
+            self._throttle.record_success(client_ip, normalized)
+        return IssuedSession(token=self._tokens.issue(user.id), user_id=user.id)
 
 
 class ResolveScope:
@@ -64,34 +99,17 @@ class GetMe:
 
 
 class UpdateMerchantProfile:
+    """Owner-only profile update; the request session owns the transaction boundary."""
+
     def __init__(self, merchants: MerchantRepository) -> None:
         self._merchants = merchants
 
-    def execute(self, merchant_id: str, data: dict) -> Merchant:
-        merchant = self._merchants.get(merchant_id)
+    def execute(self, scope: MerchantScope, changes: MerchantChanges) -> Merchant:
+        if not can_edit_profile(Role(scope.role)):
+            raise Forbidden("Only the merchant owner can edit the profile")
+        if changes.is_empty:
+            raise DomainError("No fields to update")
+        merchant = self._merchants.update(scope.merchant_id, changes)
         if merchant is None:
-            raise Exception("Merchant not found")
-        updates: dict = {}
-        if "display_name" in data:
-            updates["display_name"] = data["display_name"]
-        if "category" in data:
-            updates["category"] = data["category"]
-        if "operating_days" in data:
-            updates["operating_days"] = ",".join(data["operating_days"])
-        if "monthly_goal_centimes" in data:
-            updates["monthly_goal_centimes"] = data["monthly_goal_centimes"]
-        for key, value in updates.items():
-            setattr(merchant, key, value)
-        self._merchants._s.add(merchant)
-        self._merchants._s.commit()
-        self._merchants._s.refresh(merchant)
-        return Merchant(
-            merchant_id=merchant.merchant_id,
-            display_name=merchant.display_name,
-            category=merchant.category,
-            timezone=merchant.timezone,
-            operating_days=tuple(d for d in merchant.operating_days.split(",") if d),
-            monthly_goal=Money(merchant.monthly_goal_centimes)
-        if merchant.monthly_goal_centimes is not None
-        else None,
-        )
+            raise NotFound("Merchant not found")
+        return merchant

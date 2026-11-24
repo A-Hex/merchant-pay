@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from app.container import (
     get_acknowledge_alert,
+    get_audit_repository,
     get_evaluate_alerts,
     get_list_alerts,
     get_resolve_alert,
@@ -19,6 +20,7 @@ from app.contexts.alerts.application.manage_alerts import (
 )
 from app.contexts.alerts.domain.alert import Alert, AlertState, Severity
 from app.shared.api.schemas import PeriodOut
+from app.shared.audit import SqlAuditRepository
 from app.shared.domain.merchant_scope import MerchantScope
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -106,11 +108,17 @@ def evaluate_alerts(
 
 @router.post("/{alert_id}/acknowledge", response_model=AlertOut)
 def acknowledge_alert(alert_id: int, scope: MerchantScope = Depends(get_scope),
-                      uc: AcknowledgeAlert = Depends(get_acknowledge_alert)) -> AlertOut:
-    return AlertOut.of(uc.execute(scope, alert_id))
+                      uc: AcknowledgeAlert = Depends(get_acknowledge_alert),
+                      audit: SqlAuditRepository = Depends(get_audit_repository)) -> AlertOut:
+    alert = uc.execute(scope, alert_id)
+    audit.record(scope.user_id, "alert.acknowledged", f"alert:{alert_id}")
+    return AlertOut.of(alert)
 
 
 @router.post("/{alert_id}/resolve", response_model=AlertOut)
 def resolve_alert(alert_id: int, scope: MerchantScope = Depends(get_scope),
-                  uc: ResolveAlert = Depends(get_resolve_alert)) -> AlertOut:
-    return AlertOut.of(uc.execute(scope, alert_id))
+                  uc: ResolveAlert = Depends(get_resolve_alert),
+                  audit: SqlAuditRepository = Depends(get_audit_repository)) -> AlertOut:
+    alert = uc.execute(scope, alert_id)
+    audit.record(scope.user_id, "alert.resolved", f"alert:{alert_id}")
+    return AlertOut.of(alert)
