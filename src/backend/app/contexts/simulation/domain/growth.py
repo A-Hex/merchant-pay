@@ -72,6 +72,4 @@ def simulate(baseline: Baseline, a: Assumptions) -> Projection:
     )
 
 
-# TODO(Person A): application/run_simulation.py RunGrowthSimulation(reader, scenario_repo)
-#   .execute(scope, baseline_period, assumptions) -> Projection (+ persist ScenarioRunRow).
-#   api: POST /simulations/growth. Stretch: solve_for_goal(baseline, goal) -> required growth.
+# TODO(stretch): solve_for_goal(baseline, goal) -> the volume growth needed to cover a goal.

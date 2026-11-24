@@ -19,6 +19,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-only-insecure-secret-change-me-in-env}
       CORS_ORIGINS: '["http://localhost:5173"]'
       DATA_DIR: /data
+      # Freeze "today" (synthetic + workbook data end 2026-11-20) so KPIs, alert windows
+      # and the simulator stay reproducible. Override DEMO_TODAY to use the real clock.
+      DEMO_TODAY: ${DEMO_TODAY:-2026-11-20}
     volumes: ["./data:/data:ro"]
     ports: ["8000:8000"]
     depends_on:

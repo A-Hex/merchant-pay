@@ -41,6 +41,10 @@ make dev-front                                        # web app on http://localh
 | http://localhost:8000/health | Health check |
 | `localhost:5433` | PostgreSQL (`merchantpay` / `merchantpay`). Port 5433 avoids clashing with a local Postgres. |
 
+Both clocks are frozen at **2026-11-20**, the last day of data: the web app via `VITE_DEMO_TODAY`, the
+API via `DEMO_TODAY` (set in `docker-compose.yml`). That keeps KPIs, alert windows and the simulator
+reproducible; override `DEMO_TODAY` to evaluate against the real date.
+
 **Challenge workbook:** drop `Inventory_Report_Template.xlsx` into `data/source/` and run `make seed`
 again. The importer prints a row-by-row report if anything is invalid.
 
@@ -63,10 +67,10 @@ The six required modules from the blueprint, with where each one lives.
 |---|---|---|---|---|
 | 01 | Merchant management (login, profile, access) | `contexts/identity` | `features/auth`, `features/merchant` | ✅ login, scope, `GET /merchant/me` · ⬜ profile edit |
 | 02 | Transaction ledger (search, filters, detail) | `contexts/ledger` | `features/transactions` | ✅ |
-| 03 | Collection engine (status-separated totals, A vs B) | `contexts/analytics` | `features/collections` | 🟡 KPIs done · ⬜ `/collections/summary` + page |
-| 04 | Dynamic dashboard | `contexts/analytics` | `features/dashboard` | ✅ (alert panel ⬜) |
-| 05 | Alerts and recommendations | `contexts/alerts` | `features/alerts` | 🟡 `Alert` + `CollectionDropRule` · ⬜ 3 rules, repo, API, page |
-| 06 | Commercial growth simulator (+15%) | `contexts/simulation` | `features/simulator` | 🟡 `simulate()` · ⬜ API + page |
+| 03 | Collection engine (status-separated totals, A vs B) | `contexts/analytics` | `features/collections` | ✅ `/collections/summary` + page |
+| 04 | Dynamic dashboard | `contexts/analytics` | `features/dashboard` | ✅ |
+| 05 | Alerts and recommendations | `contexts/alerts` | `features/alerts` | ✅ 4 rules, dedupe, transitions, page, dashboard panel |
+| 06 | Commercial growth simulator (+15%) | `contexts/simulation` | `features/simulator` | ✅ API, scenario audit, page with assumptions |
 | ★ | Insights (Beta-Binomial decline signal) | `contexts/analytics` | `features/insights` | ⬜ stretch |
 | — | Import, provenance, demo seed | `contexts/ledger`, `app/seed` | — | ✅ |
 
@@ -178,9 +182,9 @@ src/backend/
 |---|---|---|---|---|
 | **identity** | `model.py`: `User`, `Merchant`, `MerchantAccess`, `Role` | `ports.py`, `use_cases.py`: `Authenticate`, `ResolveScope`, `GetMe` | `security.py`: Argon2, JWT · `sql_repositories.py` | `router.py`: login, logout, `/merchant/me` |
 | **ledger** | `transaction.py`: `Transaction` · `row_parsing.py`: validation · `import_batch.py` | `ports.py`, `queries.py`: `SearchTransactions`, `GetTransaction` · `import_transactions.py` | `sql_transaction_repository.py` · `file_sources.py`: xlsx/csv | `router.py`: `/transactions` |
-| **analytics** | `kpis.py`: `compute_kpis`, `channel_mix`, `collection_series` · `period_comparison.py` | `get_dashboard.py`: `GetDashboard`, `TransactionReader` port | (reuses the ledger SQL repository) | `router.py`: `/analytics/dashboard` |
-| **alerts** | `alert.py`: `Alert` state machine · `rules.py`: `AlertRule`, `CollectionDropRule` | `ports.py`: `AlertRepository` ⬜ use cases | ⬜ `sql_alert_repository.py` | ⬜ `router.py` |
-| **simulation** | `growth.py`: `Baseline`, `Assumptions`, `simulate` | ⬜ `run_simulation.py` | ⬜ scenario repository | ⬜ `router.py` |
+| **analytics** | `kpis.py`: `compute_kpis`, `channel_mix`, `collection_series` · `period_comparison.py` | `get_dashboard.py`: `GetDashboard` · `get_collections.py`: `GetCollectionsSummary` | (reuses the ledger SQL repository) | `router.py`: `/analytics/dashboard` · `collections_router.py` endpoints: `/collections/summary` |
+| **alerts** | `alert.py`: `Alert` state machine · `rules.py`: `CollectionDropRule`, `DeclineSpikeRule`, `InactivityRule`, `GoalReachedRule` | `ports.py`, `evaluate_alerts.py`, `manage_alerts.py` | `sql_alert_repository.py` (dedupe on `dedupe_key`) | `router.py`: `/alerts` |
+| **simulation** | `growth.py`: `Baseline`, `Assumptions`, `simulate` · `scenario_run.py` | `run_simulation.py` | `sql_scenario_repository.py` (audit row) | `router.py`: `/simulations/growth` |
 
 ⬜ marks files to create, listed with their exact paths in [`docs/TEAM_PLAN.md`](docs/TEAM_PLAN.md).
 `TODO(Person A)` comments in the code mark the same spots.
@@ -210,9 +214,9 @@ src/frontend/
 │   │   ├── auth/             ✅ LoginPage · api.ts (useMe, useLogin, useLogout)
 │   │   ├── dashboard/        ✅ DashboardPage (KPIs, trend, channels, statuses) · api.ts
 │   │   ├── transactions/     ✅ TransactionsPage (filters in URL) · TransactionDrawer · api.ts
-│   │   ├── collections/      ⬜ placeholder
-│   │   ├── alerts/           ⬜ placeholder
-│   │   ├── simulator/        ⬜ placeholder
+│   │   ├── collections/      ✅ CollectionsPage (period A vs B, status cards) · api.ts
+│   │   ├── alerts/           ✅ AlertsPage (tabs, detail, ack/resolve) · api.ts · SeverityBadge
+│   │   ├── simulator/        ✅ SimulatorPage (+15% default, assumptions) · api.ts
 │   │   ├── insights/         ⬜ placeholder (stretch)
 │   │   └── merchant/         ⬜ ProfilePage placeholder
 │   ├── components/
@@ -233,9 +237,9 @@ src/frontend/
 | `/login` | `features/auth/LoginPage.tsx` | `POST /auth/login` |
 | `/` | `features/dashboard/DashboardPage.tsx` | `GET /analytics/dashboard` |
 | `/transactions` | `features/transactions/TransactionsPage.tsx` | `GET /transactions`, `GET /transactions/{id}` |
-| `/collections` | `features/collections/CollectionsPage.tsx` | ⬜ `GET /collections/summary` |
-| `/alerts` | `features/alerts/AlertsPage.tsx` | ⬜ `GET /alerts` … |
-| `/simulator` | `features/simulator/SimulatorPage.tsx` | ⬜ `POST /simulations/growth` |
+| `/collections` | `features/collections/CollectionsPage.tsx` | `GET /collections/summary` |
+| `/alerts` | `features/alerts/AlertsPage.tsx` | `GET /alerts`, `POST /alerts/evaluate` |
+| `/simulator` | `features/simulator/SimulatorPage.tsx` | `POST /simulations/growth` |
 | `/insights` | `features/insights/InsightsPage.tsx` | ⬜ `GET /insights/decline` |
 | `/profile` | `features/merchant/ProfilePage.tsx` | `GET /merchant/me` · ⬜ `PATCH /merchant/me` |
 
@@ -253,9 +257,10 @@ All under `/api/v1`. Every merchant endpoint is scoped server-side by `Depends(g
 | GET | `/transactions?date_from&date_to&status&channel&q&page&size` | ledger | ✅ |
 | GET | `/transactions/{id}` | ledger | ✅ |
 | GET | `/analytics/dashboard?date_from&date_to&granularity` | analytics | ✅ |
-| GET | `/collections/summary` | analytics | ⬜ |
-| GET | `/alerts` · POST `/alerts/evaluate` · POST `/alerts/{id}/acknowledge\|resolve` | alerts | ⬜ |
-| POST | `/simulations/growth` | simulation | ⬜ |
+| GET | `/collections/summary?a_from&a_to&b_from&b_to` | analytics | ✅ |
+| GET | `/alerts?state` | alerts | ✅ |
+| POST | `/alerts/evaluate` · `/alerts/{id}/acknowledge\|resolve` | alerts | ✅ |
+| POST | `/simulations/growth` | simulation | ✅ |
 | GET | `/insights/decline` | analytics | ⬜ stretch |
 
 ---

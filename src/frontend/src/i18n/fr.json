@@ -23,7 +23,30 @@
   "dashboard": {
     "trend": "Évolution des encaissements acceptés", "channels": "Répartition par canal",
     "statuses": "Répartition par statut", "byCount": "Nombre", "byAmount": "Montant accepté",
-    "openLedger": "Voir les transactions"
+    "openLedger": "Voir les transactions", "alerts": "Alertes ouvertes",
+    "seeAllAlerts": "Toutes les alertes"
+  },
+  "alerts": {
+    "title": "Alertes et recommandations",
+    "detail": "Détail de l'alerte",
+    "rules": {
+      "COLLECTION_DROP": "Baisse des encaissements",
+      "DECLINE_SPIKE": "Pic de refus",
+      "INACTIVITY": "Inactivité",
+      "GOAL_PROGRESS": "Objectif mensuel"
+    },
+    "state": { "open": "Ouvertes", "acknowledged": "Acquittées", "resolved": "Résolues" },
+    "severity": { "critical": "Critique", "warning": "Vigilance", "info": "Information" },
+    "observed": "Valeur observée", "baseline": "Référence", "delta": "Écart",
+    "window": "Fenêtre analysée", "days": "jours",
+    "evidence": "Voir les transactions concernées",
+    "acknowledge": "Acquitter", "resolve": "Résoudre",
+    "evaluate": "Relancer l'analyse", "evaluating": "Analyse en cours…",
+    "evaluated": "{{count}} nouvelle(s) alerte(s).",
+    "empty": "Aucune alerte dans cette vue.",
+    "select": "Sélectionnez une alerte pour afficher son détail.",
+    "method": "Comment cette alerte est calculée",
+    "methodBody": "Chaque alerte indique la règle, la fenêtre analysée, la valeur observée et sa référence. Une alerte n'est créée qu'une fois par règle et par fenêtre."
   },
   "status": { "accepted": "Acceptée", "declined": "Refusée", "cancelled": "Annulée", "refunded": "Remboursée" },
   "channel": {
@@ -31,6 +54,48 @@
     "contactless": "Sans contact / NFC", "bank_transfer": "Virement bancaire"
   },
   "origin": { "challenge_source": "Source challenge", "synthetic_demo": "Démo synthétique" },
+  "collections": {
+    "title": "Encaissements par statut",
+    "periodA": "Période A (analysée)",
+    "periodB": "Période B (référence)",
+    "rules": "Seules les transactions acceptées comptent comme encaissements. Refusées, annulées et remboursées restent séparées et ne sont jamais déduites.",
+    "comparing": "A : du {{aFrom}} au {{aTo}} · B : du {{bFrom}} au {{bTo}}",
+    "acceptanceA": "Taux d'acceptation (A)",
+    "bRate": "Référence B : {{value}}",
+    "vsB": "Référence : {{amount}}",
+    "counts": "{{a}} contre {{b}} transactions",
+    "previousB": "Période précédente",
+    "empty": "Aucune transaction sur la période A."
+  },
+  "simulator": {
+    "title": "Simulateur de croissance",
+    "intro": "Scénario déterministe : mêmes encaissements de référence, hypothèses explicites. Ce n'est pas une prévision.",
+    "volume": "Croissance du volume",
+    "acceptance": "Variation du taux d'acceptation (points)",
+    "acceptanceShort": "Taux d'acceptation",
+    "ticket": "Variation du panier moyen (%)",
+    "ticketShort": "Panier moyen",
+    "advanced": "Hypothèses avancées",
+    "run": "Calculer la projection",
+    "running": "Calcul en cours…",
+    "reset": "Réinitialiser",
+    "points": "pts",
+    "baselineHint": "Référence : du {{from}} au {{to}}",
+    "baselinePeriod": "Période de référence",
+    "baselineCollection": "Encaissements de référence",
+    "baselineCount": "Transactions de référence",
+    "projectedCount": "Transactions projetées",
+    "projectedCollection": "Encaissements projetés",
+    "projectedAcceptance": "Taux d'acceptation projeté",
+    "projectedTicket": "Panier moyen projeté",
+    "delta": "Écart d'encaissement",
+    "assumptions": "Hypothèses utilisées",
+    "goal": "Objectif mensuel",
+    "goalGap": "Écart à l'objectif",
+    "notForecast": "Projection arithmétique sur une base observée : ni saisonnalité ni incertitude ne sont modélisées.",
+    "empty": "Aucune projection calculée pour cette période.",
+    "error": "La période de référence ne contient aucun encaissement accepté : choisissez une autre période."
+  },
   "tx": {
     "search": "Rechercher un ID de transaction…", "id": "ID", "date": "Date", "amount": "Montant",
     "channel": "Canal", "status": "Statut", "category": "Catégorie", "origin": "Origine",

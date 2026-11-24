@@ -1,0 +1,15 @@
+Metadata-Version: 2.4
+Name: merchant-pay-backend
+Version: 0.1.0
+Summary: Merchant Pay API - FINOVIA x SATIM challenge
+Requires-Python: >=3.12
+Requires-Dist: fastapi>=0.115
+Requires-Dist: uvicorn[standard]>=0.30
+Requires-Dist: sqlalchemy>=2.0
+Requires-Dist: alembic>=1.13
+Requires-Dist: psycopg[binary]>=3.2
+Requires-Dist: pydantic>=2.7
+Requires-Dist: pydantic-settings>=2.3
+Requires-Dist: pyjwt>=2.8
+Requires-Dist: pwdlib[argon2]>=0.2
+Requires-Dist: openpyxl>=3.1

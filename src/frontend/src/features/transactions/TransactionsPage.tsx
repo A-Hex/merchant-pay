@@ -12,8 +12,11 @@ import { TransactionDrawer } from "./TransactionDrawer";
 /** Ledger filters live in the URL so a dashboard/alert can deep-link here (e.g. ?status=declined). */
 export function TransactionsPage() {
   const { t } = useTranslation();
-  const { dateFrom, dateTo } = useFilters();
+  const filters = useFilters();
   const [params, setParams] = useSearchParams();
+  // An alert's evidence link carries its own window; otherwise the global period filter applies.
+  const dateFrom = params.get("date_from") ?? filters.dateFrom;
+  const dateTo = params.get("date_to") ?? filters.dateTo;
   const status = params.getAll("status") as TransactionStatus[];
   const channel = params.getAll("channel") as Channel[];
   const q = params.get("q") ?? "";

@@ -1,24 +1,31 @@
+from collections.abc import Sequence
 from typing import Protocol
 
-from app.contexts.alerts.domain.alert import Alert
+from app.contexts.alerts.domain.alert import Alert, AlertState
+from app.contexts.identity.domain.model import Merchant
 from app.shared.domain.merchant_scope import MerchantScope
 
 
 class AlertRepository(Protocol):
-    def list(self, scope: MerchantScope) -> list[Alert]: ...
+    def list(self, scope: MerchantScope, states: Sequence[AlertState] | None = None,
+             limit: int | None = None) -> list[Alert]:
+        """Newest first, most severe first. Alerts of other merchants never leak in."""
+        ...
 
     def get(self, scope: MerchantScope, alert_id: int) -> Alert | None: ...
 
-    def save(self, alert: Alert) -> Alert:
-        """Insert or update. Insert is skipped when dedupe_key already exists."""
+    def count_by_state(self, scope: MerchantScope) -> dict[AlertState, int]: ...
+
+    def add_if_absent(self, alert: Alert) -> Alert | None:
+        """Insert a new alert. Returns None when its dedupe_key already exists (idempotent)."""
+        ...
+
+    def update(self, alert: Alert) -> Alert:
+        """Persist a state change on an existing alert (same merchant only)."""
         ...
 
 
-# TODO(Person A):
-#   application/evaluate_alerts.py: EvaluateAlerts(reader: TransactionReader, repo, rules)
-#       .execute(scope, today) -> builds RuleContext (last 14 days vs previous 14), runs rules,
-#       saves new alerts.
-#   application/manage_alerts.py: ListAlerts, AcknowledgeAlert, ResolveAlert (load -> call
-#       aggregate method -> save).
-#   infrastructure/sql_alert_repository.py (AlertRow in app/db/models.py already exists).
-#   api/router.py: GET /alerts, POST /alerts/evaluate, POST /alerts/{id}/acknowledge|resolve.
+class MerchantProfileReader(Protocol):
+    """Port for the monthly goal. Implemented by identity's SqlMerchantRepository."""
+
+    def get(self, merchant_id: str) -> Merchant | None: ...

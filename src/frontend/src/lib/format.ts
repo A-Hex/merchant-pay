@@ -9,6 +9,11 @@ export function formatMoney(m: Money | null | undefined): string {
   return new Intl.NumberFormat(locale(), { style: "currency", currency: "DZD" }).format(Number(m.amount));
 }
 
+/** Money from an exact decimal string (e.g. an alert's observed value), display only. */
+export function formatDzd(value: number | string): string {
+  return new Intl.NumberFormat(locale(), { style: "currency", currency: "DZD" }).format(Number(value));
+}
+
 export function formatCompactDzd(units: number): string {
   return new Intl.NumberFormat(locale(), { notation: "compact", maximumFractionDigits: 1 }).format(units);
 }

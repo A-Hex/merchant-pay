@@ -10,6 +10,7 @@ from app.contexts.identity.application.ports import (
 from app.contexts.identity.domain.model import Merchant, MerchantAccess, User
 from app.shared.domain.errors import Forbidden, InvalidCredentials, NotFound
 from app.shared.domain.merchant_scope import MerchantScope
+from app.shared.domain.money import Money
 
 
 class Authenticate:
@@ -62,5 +63,35 @@ class GetMe:
         return Me(user, merchant, self._access.for_user(scope.user_id))
 
 
-# TODO(Person A): UpdateMerchantProfile use case (display_name, category, operating_days,
-#   monthly_goal) + MerchantRepository.save + PATCH /merchant/me + AuditEvent "profile.updated".
+class UpdateMerchantProfile:
+    def __init__(self, merchants: MerchantRepository) -> None:
+        self._merchants = merchants
+
+    def execute(self, merchant_id: str, data: dict) -> Merchant:
+        merchant = self._merchants.get(merchant_id)
+        if merchant is None:
+            raise Exception("Merchant not found")
+        updates: dict = {}
+        if "display_name" in data:
+            updates["display_name"] = data["display_name"]
+        if "category" in data:
+            updates["category"] = data["category"]
+        if "operating_days" in data:
+            updates["operating_days"] = ",".join(data["operating_days"])
+        if "monthly_goal_centimes" in data:
+            updates["monthly_goal_centimes"] = data["monthly_goal_centimes"]
+        for key, value in updates.items():
+            setattr(merchant, key, value)
+        self._merchants._s.add(merchant)
+        self._merchants._s.commit()
+        self._merchants._s.refresh(merchant)
+        return Merchant(
+            merchant_id=merchant.merchant_id,
+            display_name=merchant.display_name,
+            category=merchant.category,
+            timezone=merchant.timezone,
+            operating_days=tuple(d for d in merchant.operating_days.split(",") if d),
+            monthly_goal=Money(merchant.monthly_goal_centimes)
+        if merchant.monthly_goal_centimes is not None
+        else None,
+        )

@@ -10,7 +10,10 @@ from sqlalchemy import delete
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
-from app.container import _session_factory, get_password_hasher
+from app.container import _session_factory, get_password_hasher, get_today
+from app.contexts.alerts.application.evaluate_alerts import EvaluateAlerts
+from app.contexts.alerts.infrastructure.sql_alert_repository import SqlAlertRepository
+from app.contexts.identity.infrastructure.sql_repositories import SqlMerchantRepository
 from app.contexts.ledger.application.import_transactions import ImportTransactions
 from app.contexts.ledger.infrastructure.file_sources import read_any
 from app.contexts.ledger.infrastructure.sql_transaction_repository import (
@@ -21,6 +24,7 @@ from app.db.base import Base
 from app.seed.accounts import ensure_merchant, ensure_user
 from app.seed.synthetic_demo import DEMO_MERCHANTS, generate_rows
 from app.shared.domain.enums import DataOrigin
+from app.shared.domain.merchant_scope import MerchantScope
 
 DEMO_PASSWORD = "demo1234"  # synthetic demo accounts only
 
@@ -71,6 +75,18 @@ def seed_workbook(s: Session, source_dir: Path) -> None:
         print(f"  owner@merchantpay.test -> {first.merchant_id}")
 
 
+def seed_alerts(s: Session) -> None:
+    """Evaluate the alert rules for the demo merchants so the jury sees alerts after `make seed`."""
+    today = get_today(get_settings())
+    evaluator = EvaluateAlerts(SqlTransactionRepository(s), SqlAlertRepository(s),
+                               SqlMerchantRepository(s))
+    for m in DEMO_MERCHANTS:
+        # system scope: seeding is not a merchant request, it is the fixture builder
+        scope = MerchantScope(user_id=0, merchant_id=m.merchant_id, role="owner")
+        result = evaluator.execute(scope, today)
+        print(f"  {m.merchant_id}: {len(result.created)} alert(s) on {today}")
+
+
 def main() -> None:
     source_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else get_settings().data_dir / "source"
     with _session_factory()() as s, s.begin():
@@ -80,6 +96,8 @@ def main() -> None:
         seed_synthetic(s)
         print("Importing challenge workbook...")
         seed_workbook(s, source_dir)
+        print("Evaluating alerts...")
+        seed_alerts(s)
     print(f"Done. Demo password for all accounts: {DEMO_PASSWORD}")
 
 
