@@ -1,5 +1,8 @@
 # Team plan: hackathon day
 
+> **Status verified 2026-11-25** against code and tests: see `docs/CEO_PAY_REVIEW.md` (§2 repository reality).
+> Still open below: official workbook import, timed runbook rehearsal, keyboard pass, README screenshots/video.
+
 **Goal:** all six required modules work end to end in the live app, the demo is reproducible from
 `make seed`, and there is one honest intelligence feature. Functionality and technical quality are 50% of
 the score, so **never trade a mandatory flow for ML**.
@@ -26,10 +29,10 @@ the score, so **never trade a mandatory flow for ML**.
 Hours assume a ~14 h working day. Scale them if the event is shorter, and cut from the bottom of the list.
 
 ### Phase 0, together (≤ 1 h)
-- [ ] Both: `make install && make up seed && make dev-front`, log in, run `make test`.
+- [x] Both: `make install && make up seed && make dev-front`, log in, run `make test`. *(verified 2026-11-25: 124 backend tests)*
 - [ ] Drop the real workbook into `data/source/`, run `make seed`. If import fails, A adds header aliases in
       `ledger/infrastructure/file_sources.py::HEADER_ALIASES` (the importer prints the found headers).
-- [ ] Agree on the response shapes for the Phase 1–2 endpoints (below).
+- [x] Agree on the response shapes for the Phase 1–2 endpoints (below).
 - **Exit gate:** the app runs on both laptops and the workbook is imported.
 
 ### Phase 1, core modules (≈ 4 h)
@@ -44,7 +47,7 @@ Hours assume a ~14 h working day. Scale them if the event is shorter, and cut fr
 - [x] Collections page (`features/collections/`): period A vs B pickers, status cards, delta badges,
       "see transactions" deep links (`/transactions?status=…`).
 - [x] Profile page (`features/merchant/`): show `/merchant/me`, edit form → PATCH, monthly goal input.
-- [ ] Dashboard: empty state when `total_count == 0`, a skeleton while loading, and a mobile layout check at 375 px.
+- [x] Dashboard: empty state when `total_count == 0`, a skeleton while loading, and a mobile layout check at 375 px. *(390 px screenshot, no overflow)*
 - **Exit gate:** modules 01–04 pass the acceptance checklist (bottom of this file).
 
 ### Phase 2, alerts and simulator (≈ 4 h)
@@ -72,13 +75,14 @@ Hours assume a ~14 h working day. Scale them if the event is shorter, and cut fr
       posterior mean + 90% credible interval, with "insufficient data" below 20 attempts. Endpoint `GET /insights/decline`.
 - [x] A+B: high/low activity periods (mandatory, module 04): `GET /analytics/activity` + dashboard card.
 - [x] B: Insights page (Collection Opportunity Radar): per-channel declined value, credible intervals, sample size, "insufficient data" state.
-- [ ] A (stretch): `solve_for_goal` in the simulator ("+X% volume needed to reach the monthly goal").
-- [ ] B: finish the Arabic strings for new pages, then check keyboard navigation and focus states.
+- [x] A (stretch): `solve_for_goal` in the simulator: delivered as the Scenario Lab's `required_volume_growth` (`test_goal_solver_is_linear_in_volume`).
+- [x] B: finish the Arabic strings for new pages (FR/AR key sets identical).
+- [ ] B: keyboard navigation and focus-state pass (not yet verified systematically).
 - **Exit gate:** each insight explains its method, data and limits, and its fallback works.
 
 ### Phase 4, freeze and rehearse (≈ 2 h, NO new features)
 - [ ] `make seed` from scratch, then run the full runbook twice and time it.
-- [ ] Remove the `PlaceholderPage` usages. No dead buttons.
+- [x] Remove the `PlaceholderPage` usages (file deleted). No dead buttons.
 - [ ] Update the README with screenshots and record a backup video.
 
 ## If you're late, cut in this order
@@ -102,13 +106,13 @@ Hours assume a ~14 h working day. Scale them if the event is shorter, and cut fr
 - **Blocked for more than 20 min?** Tell your teammate and pick the next task.
 
 ## Acceptance checklist (from blueprint §14)
-- [ ] A user logs in and sees only their assigned merchant (`demo2` sees different data).
-- [ ] The ledger returns correct records for combined date, status and channel filters.
-- [ ] The dashboard's accepted gross amount equals the sum of the filtered Accepted rows.
-- [ ] Declined, Cancelled and Refunded totals are separate everywhere.
-- [ ] The period comparison handles a previous period of zero.
-- [ ] The 20% collection-drop alert triggers on the seeded hero merchant.
-- [ ] The decline spike alert includes its denominator and baseline.
-- [ ] The +15% simulator result is reproducible and shows its assumptions.
+- [x] A user logs in and sees only their assigned merchant (`demo2` sees different data). *(`test_api`, cross-tenant tests)*
+- [x] The ledger returns correct records for combined date, status and channel filters. *(`test_ledger_is_scoped_and_filters_combine`)*
+- [x] The dashboard's accepted gross amount equals the sum of the filtered Accepted rows. *(live probe, `docs/CEO_PAY_REVIEW.md` §4)*
+- [x] Declined, Cancelled and Refunded totals are separate everywhere. *(`test_collections_api`, live probe)*
+- [x] The period comparison handles a previous period of zero. *(`test_zero_reference_period_is_new_activity_not_infinity`)*
+- [x] The 20% collection-drop alert triggers on the seeded hero merchant. *(`make seed` → 2 alerts on M-DEMO-01)*
+- [x] The decline spike alert includes its denominator and baseline. *(alert text `10 / 74 tentatives … 6 / 148`)*
+- [x] The +15% simulator result is reproducible and shows its assumptions. *(`test_observed_baseline_makes_growth_exact`, exact to the centime)*
 - [x] Insights have an insufficient-data fallback.
-- [ ] The six-step demo completes after `make seed` with no manual DB edits.
+- [x] The six-step demo completes after `make seed` with no manual DB edits. *(headless-browser drive of all six steps after `make seed`)*

@@ -23,7 +23,7 @@
     "collectedHelp": "Somme des transactions au statut Acceptée sur la période. Refusées, annulées et remboursées sont exclues."
   },
   "dashboard": {
-    "trend": "Évolution des encaissements acceptés", "channels": "Répartition par canal",
+    "empty": "Aucune transaction sur cette période : choisissez une autre période (raccourcis 7 j / 30 j / 90 j) pour voir l'analyse.", "trend": "Évolution des encaissements acceptés", "channels": "Répartition par canal",
     "statuses": "Répartition par statut", "byCount": "Nombre", "byAmount": "Montant accepté",
     "openLedger": "Voir les transactions", "alerts": "Alertes ouvertes",
     "seeAllAlerts": "Toutes les alertes"

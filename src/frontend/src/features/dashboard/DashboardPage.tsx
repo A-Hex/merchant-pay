@@ -37,6 +37,9 @@ export function DashboardPage() {
         <KpiCard label={t("kpi.avgTicket")} value={formatMoney(k.average_ticket)} />
       </div>
 
+      {k.total_count === 0 ? (
+        <EmptyState>{t("dashboard.empty")}</EmptyState>
+      ) : (<>
       <PulseCard />
 
       <Card title={t("dashboard.trend")}><TrendChart d={d} /></Card>
@@ -60,6 +63,8 @@ export function DashboardPage() {
           </ul>
         </Card>
       </div>
+
+      </>)}
 
       <AlertPanel />
     </div>
