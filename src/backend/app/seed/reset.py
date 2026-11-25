@@ -46,7 +46,7 @@ def seed_synthetic(s: Session) -> None:
                                       data_origin=DataOrigin.SYNTHETIC_DEMO)
         if not report.ok:
             raise SystemExit(f"Synthetic import failed: {report.errors[:5]}")
-        email = "demo@merchantpay.test" if i == 1 else f"demo{i}@merchantpay.test"
+        email = "demo@ceo-pay.test" if i == 1 else f"demo{i}@ceo-pay.test"
         ensure_user(s, hasher, email, DEMO_PASSWORD, m.merchant_id)
         print(f"  {m.merchant_id}: {report.imported_rows} synthetic rows -> {email}")
 
@@ -70,9 +70,9 @@ def seed_workbook(s: Session, source_dir: Path) -> None:
     first = s.query(MerchantRow).filter(~MerchantRow.merchant_id.like("M-DEMO-%")) \
         .order_by(MerchantRow.merchant_id).first()
     if first:
-        ensure_user(s, get_password_hasher(), "owner@merchantpay.test", DEMO_PASSWORD,
+        ensure_user(s, get_password_hasher(), "owner@ceo-pay.test", DEMO_PASSWORD,
                     first.merchant_id)
-        print(f"  owner@merchantpay.test -> {first.merchant_id}")
+        print(f"  owner@ceo-pay.test -> {first.merchant_id}")
 
 
 def seed_alerts(s: Session) -> None:

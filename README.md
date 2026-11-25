@@ -8,7 +8,7 @@ honest*. Every KPI reconciles with the ledger, every alert shows its evidence, a
 shows its assumptions. Full specification: [`docs/blueprint.pdf`](docs/blueprint.pdf).
 
 *Naming:* the product is **CEO-Pay**; the challenge is *Merchant Pay*. Technical identifiers keep the
-original name (`merchantpay` database, `@merchantpay.test` demo accounts, package names) so existing
+original name (`merchantpay` database and package names) so existing
 volumes, scripts and lockfiles keep working.
 
 ## Contents
@@ -56,9 +56,9 @@ again. The importer prints a row-by-row report if anything is invalid.
 
 | Email | Merchant | Use it to show |
 |---|---|---|
-| `demo@merchantpay.test` | `M-DEMO-01` Épicerie Démo Boumerdès | main demo: ~2,150 transactions with a planted collection drop and decline spike on 7–20 Nov |
-| `demo2@merchantpay.test` | `M-DEMO-02` Restaurant Démo | tenant isolation (sees different data) |
-| `owner@merchantpay.test` | first merchant of the workbook | real challenge data (only after the workbook is imported) |
+| `demo@ceo-pay.test` | `M-DEMO-01` Épicerie Démo Boumerdès | main demo: ~2,150 transactions with a planted collection drop and decline spike on 7–20 Nov |
+| `demo2@ceo-pay.test` | `M-DEMO-02` Restaurant Démo | tenant isolation (sees different data) |
+| `owner@ceo-pay.test` | first merchant of the workbook | real challenge data (only after the workbook is imported) |
 
 ---
 

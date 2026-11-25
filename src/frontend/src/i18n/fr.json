@@ -8,7 +8,7 @@
     "welcome": "Bon retour", "context": "Défi FINOVIA × ENSM × SATIM · données de paiement synthétiques", "showPassword": "Afficher le mot de passe", "hidePassword": "Masquer le mot de passe",
     "title": "Connexion à votre espace marchand", "email": "Adresse e-mail", "password": "Mot de passe",
     "submit": "Se connecter", "error": "E-mail ou mot de passe incorrect",
-    "demoHint": "Compte démo : demo@merchantpay.test / demo1234", "logout": "Déconnexion", "throttled": "Trop de tentatives échouées. Patientez 15 minutes avant de réessayer."
+    "demoHint": "Compte démo : demo@ceo-pay.test / demo1234", "logout": "Déconnexion", "throttled": "Trop de tentatives échouées. Patientez 15 minutes avant de réessayer."
   },
   "filters": {
     "quick": "Périodes rapides",

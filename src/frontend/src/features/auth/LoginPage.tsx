@@ -3,6 +3,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 import { ApiError } from "@/api/client";
+import { Logo, LogoMark } from "@/components/Logo";
 import { containerVariants, itemVariants, motion } from "@/components/motion";
 import { ThemeToggle } from "@/components/theme";
 import { Button } from "@/components/ui/button";
@@ -26,10 +27,7 @@ export function LoginPage() {
   return (
     <div className="flex min-h-svh">
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-zinc-950 lg:flex">
-        <div className="relative z-20 flex items-center gap-2.5 p-8">
-          <img src="/favicon.svg" alt="" aria-hidden className="size-8 rounded-lg" />
-          <span className="text-sm font-semibold text-white">{t("app.name")}</span>
-        </div>
+        <div className="relative z-20 p-8"><Logo inverted /></div>
         <div className="absolute inset-0 flex items-center justify-center"><NetworkMotif /></div>
         <div className="relative z-20 mt-auto p-8">
           <div className="rounded-xl border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
@@ -48,7 +46,7 @@ export function LoginPage() {
         </div>
         <motion.div className="w-full max-w-sm" variants={containerVariants} initial="hidden" animate="visible">
           <motion.div className="mb-8 flex flex-col items-center lg:hidden" variants={itemVariants}>
-            <img src="/favicon.svg" alt="" aria-hidden className="size-10 rounded-xl" />
+            <LogoMark className="size-10" />
           </motion.div>
           <motion.div className="text-center" variants={itemVariants}>
             <h1 className="text-2xl font-semibold tracking-tight">{t("auth.welcome")}</h1>
@@ -61,7 +59,7 @@ export function LoginPage() {
               <InputGroup>
                 <InputGroupAddon align="inline-start"><MailIcon className="size-4 text-muted-foreground" /></InputGroupAddon>
                 <InputGroupInput id="email" type="email" autoComplete="username" required value={email}
-                  placeholder="nom@commerce.dz" onChange={(e) => setEmail(e.target.value)} />
+                  placeholder="nom@ceo-pay.dz" onChange={(e) => setEmail(e.target.value)} />
               </InputGroup>
             </motion.div>
             <motion.div variants={itemVariants}>
@@ -122,9 +120,14 @@ function NetworkMotif() {
             transition={{ duration: 2.4, delay: 1.5 + i * 0.4, repeat: Infinity, repeatDelay: 1.2, ease: "easeInOut" }} />
         </g>
       ))}
-      <motion.rect x="182" y="202" width="36" height="36" rx="10" fill="white"
-        initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
-        style={{ transformOrigin: "200px 220px" }} />
+      <motion.g initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 20, delay: 0.2 }}
+        style={{ transformOrigin: "200px 220px" }}>
+        <svg x="180" y="200" width="40" height="40" viewBox="0 0 32 32">
+          <rect width="32" height="32" rx="8" fill="white" />
+          <path d="M21.9 10.1A8.4 8.4 0 1 0 21.9 21.9" fill="none" stroke="#0a0a0a" strokeWidth="3" strokeLinecap="round" />
+          <path d="M12.8 19.2 20.6 11.4M15.6 11.2h5.2v5.2" fill="none" stroke="#0a0a0a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </motion.g>
     </svg>
   );
 }
