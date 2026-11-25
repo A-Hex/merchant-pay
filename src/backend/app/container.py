@@ -29,6 +29,7 @@ from app.contexts.identity.application.use_cases import (
     ResolveScope,
     UpdateMerchantProfile,
 )
+from app.contexts.identity.infrastructure.login_throttle import LoginThrottle
 from app.contexts.identity.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from app.contexts.identity.infrastructure.sql_repositories import (
     SqlAccessRepository,
@@ -84,7 +85,12 @@ def get_token_service(settings: Settings = Depends(get_settings)) -> JwtTokenSer
 # ---- identity ----------------------------------------------------------------
 def get_authenticate(db: Session = Depends(get_db), hasher=Depends(get_password_hasher),
                      tokens=Depends(get_token_service)) -> Authenticate:
-    return Authenticate(SqlUserRepository(db), hasher, tokens)
+    return Authenticate(SqlUserRepository(db), hasher, tokens, SqlAuditLog(db))
+
+
+def get_login_throttle(request: Request) -> LoginThrottle:
+    """One throttle per app instance (created in main.create_app), so tests stay isolated."""
+    return request.app.state.login_throttle
 
 
 def get_current_user_id(request: Request, tokens=Depends(get_token_service)) -> int:

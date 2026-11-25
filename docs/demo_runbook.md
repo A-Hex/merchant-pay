@@ -9,6 +9,7 @@ make dev-front
 - Log in once as `demo@merchantpay.test` / `demo1234` to warm the caches.
 - Keep screenshots or a screen recording of the happy path in case connectivity fails.
 - If anything breaks mid-demo, run `make seed` (about 5 s) and log in again.
+- Login is throttled after 5 failed attempts (15 min). If you lock yourself out, `docker compose restart backend` clears it.
 
 ## Script
 | # | Do live | Point out |

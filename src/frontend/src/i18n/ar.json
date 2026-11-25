@@ -7,7 +7,7 @@
   "auth": {
     "title": "الدخول إلى فضاء التاجر", "email": "البريد الإلكتروني", "password": "كلمة المرور",
     "submit": "تسجيل الدخول", "error": "البريد الإلكتروني أو كلمة المرور غير صحيحة",
-    "demoHint": "حساب تجريبي: demo@merchantpay.test / demo1234", "logout": "تسجيل الخروج"
+    "demoHint": "حساب تجريبي: demo@merchantpay.test / demo1234", "logout": "تسجيل الخروج", "throttled": "محاولات فاشلة كثيرة. انتظر 15 دقيقة قبل إعادة المحاولة."
   },
   "filters": {
     "from": "من", "to": "إلى", "granularity": "التجميع", "day": "يوم", "week": "أسبوع",
