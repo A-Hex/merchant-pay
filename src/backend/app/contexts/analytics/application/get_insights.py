@@ -69,5 +69,6 @@ class GetPulse:
             self._reader.list_in_period(scope, month),
             merchant.monthly_goal if merchant else None,
             today,
+            tuple(merchant.operating_days) if merchant else (),
         )
         return Pulse(period, previous, today, items)

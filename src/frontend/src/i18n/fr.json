@@ -249,10 +249,12 @@
       "goal_reached": "{{collected}} encaissés du {{month_start}} au {{as_of}}, soit {{progress}} de l'objectif de {{goal}}.",
       "goal_on_track": "{{collected}} encaissés du {{month_start}} au {{as_of}} ({{progress}} de {{goal}}), au-dessus du rythme linéaire attendu de {{expected_by_now}}.",
       "goal_behind": "{{collected}} encaissés du {{month_start}} au {{as_of}} ({{progress}} de {{goal}}), sous le rythme linéaire attendu de {{expected_by_now}}.",
-      "goal_needed": "Il reste {{remaining}} en {{days_left}} jours, soit {{daily_needed}} par jour.",
+      "goal_needed": "Il reste {{remaining}} en {{days_left}} {{day_basis}}, soit {{daily_needed}} par jour d'ouverture.",
       "goal_not_set": "Définissez un objectif dans le profil pour suivre votre rythme mensuel."
     },
     "driver": {
+      "operating": "jours d'ouverture",
+      "calendar": "jours",
       "volume": "le nombre de transactions",
       "ticket": "le panier moyen"
     },

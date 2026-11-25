@@ -11,7 +11,7 @@ from __future__ import annotations
 import calendar
 from collections.abc import Iterable
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 from enum import StrEnum
 
@@ -151,14 +151,27 @@ def _decline_item(cur: list[Transaction], prev: list[Transaction], period: DateR
     return PulseItem(PulseCode.DECLINES, tone, facts, evidence)
 
 
-def _goal_item(month_to_date: list[Transaction], goal: Money | None, today: date) -> PulseItem:
+_WEEKDAY_CODES = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")  # date.weekday() order
+
+
+def _open_days(first: date, last: date, operating_days: tuple[str, ...]) -> int:
+    """Days in [first, last] the merchant is open; every day counts when none are configured."""
+    days = (date.fromordinal(o) for o in range(first.toordinal(), last.toordinal() + 1))
+    return sum(1 for d in days if not operating_days or _WEEKDAY_CODES[d.weekday()] in operating_days)
+
+
+def _goal_item(month_to_date: list[Transaction], goal: Money | None, today: date,
+               operating_days: tuple[str, ...] = ()) -> PulseItem:
     if goal is None or goal.centimes <= 0:
         return PulseItem(PulseCode.GOAL_NOT_SET, Tone.INFO)
     month = DateRange.inclusive(today.replace(day=1), today)
     collected = compute_kpis(t for t in month_to_date if month.contains(t.occurred_at)).gross_collected
-    days_in_month = calendar.monthrange(today.year, today.month)[1]
-    elapsed, left = today.day, days_in_month - today.day
-    expected = goal.scale(Decimal(elapsed) / Decimal(days_in_month))  # linear pace
+    month_end = today.replace(day=calendar.monthrange(today.year, today.month)[1])
+    # FIN-002: pace on the merchant's OPEN days (closed days collect nothing), calendar days if unset
+    open_in_month = _open_days(month.start, month_end, operating_days) or 1
+    elapsed = _open_days(month.start, today, operating_days)
+    left = _open_days(today + timedelta(days=1), month_end, operating_days) if today < month_end else 0
+    expected = goal.scale(Decimal(elapsed) / Decimal(open_in_month))  # linear pace over open days
     remaining = goal - collected if collected.centimes < goal.centimes else Money.zero()
     facts = {
         "goal": _money(goal), "collected": _money(collected), "expected_by_now": _money(expected),
@@ -168,6 +181,7 @@ def _goal_item(month_to_date: list[Transaction], goal: Money | None, today: date
         else Fact(FactKind.MONEY, None),
         "month_start": Fact(FactKind.DATE, month.start.isoformat()),
         "as_of": Fact(FactKind.DATE, today.isoformat()),
+        "day_basis": Fact(FactKind.CODE, "operating" if operating_days else "calendar"),
     }
     if collected.centimes >= goal.centimes:
         code, tone = PulseCode.GOAL_REACHED, Tone.POSITIVE
@@ -179,11 +193,12 @@ def _goal_item(month_to_date: list[Transaction], goal: Money | None, today: date
 
 
 def build_pulse(current: Iterable[Transaction], previous: Iterable[Transaction], period: DateRange,
-                month_to_date: Iterable[Transaction], goal: Money | None, today: date) -> list[PulseItem]:
+                month_to_date: Iterable[Transaction], goal: Money | None, today: date,
+                operating_days: tuple[str, ...] = ()) -> list[PulseItem]:
     cur, prev = list(current), list(previous)
     items = _collection_items(cur, prev, period)
     decline = _decline_item(cur, prev, period)
     if decline is not None:
         items.append(decline)
-    items.append(_goal_item(list(month_to_date), goal, today))
+    items.append(_goal_item(list(month_to_date), goal, today, operating_days))
     return items

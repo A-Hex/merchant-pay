@@ -249,10 +249,12 @@
       "goal_reached": "تم تحصيل {{collected}} من {{month_start}} إلى {{as_of}}، أي {{progress}} من هدف {{goal}}.",
       "goal_on_track": "تم تحصيل {{collected}} من {{month_start}} إلى {{as_of}} ({{progress}} من {{goal}})، فوق الوتيرة الخطية المتوقعة {{expected_by_now}}.",
       "goal_behind": "تم تحصيل {{collected}} من {{month_start}} إلى {{as_of}} ({{progress}} من {{goal}})، دون الوتيرة الخطية المتوقعة {{expected_by_now}}.",
-      "goal_needed": "يتبقى {{remaining}} في {{days_left}} يومًا، أي {{daily_needed}} يوميًا.",
+      "goal_needed": "يتبقى {{remaining}} في {{days_left}} {{day_basis}}، أي {{daily_needed}} لكل يوم عمل.",
       "goal_not_set": "حدد هدفًا في الملف لمتابعة وتيرتك الشهرية."
     },
     "driver": {
+      "operating": "أيام عمل",
+      "calendar": "أيام",
       "volume": "عدد المعاملات",
       "ticket": "متوسط السلة"
     },

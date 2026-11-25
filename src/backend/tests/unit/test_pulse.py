@@ -86,3 +86,21 @@ def test_goal_pace_uses_month_to_date_and_linear_pace():
     assert item.facts["remaining"].value == "0.00" and item.facts["daily_needed"].value is None
     october = _sales("o", 99, "1000.00", when="2026-10-31 10:00")  # outside the month: ignored
     assert PulseCode.GOAL_BEHIND in _codes(build_pulse([], [], PERIOD, october, goal, TODAY))
+
+
+def test_goal_pace_counts_only_the_merchants_open_days():
+    """FIN-002. Nov 2026: 30 days, 4 Fridays (6, 13, 20, 27). Closed Fridays -> 26 open days."""
+    goal = Money.of("26000.00")  # 1,000 per open day
+    closed_friday = ("sun", "mon", "tue", "wed", "thu", "sat")
+    month = _sales("m", 10, "1000.00", when="2026-11-05 10:00")
+    item = next(i for i in build_pulse([], [], PERIOD, month, goal, TODAY, closed_friday)
+                if i.code is PulseCode.GOAL_BEHIND)
+    # open days 1-20 Nov: 20 - 3 Fridays = 17 -> expected 17,000; left 21-30: 10 - 1 Friday = 9
+    assert item.facts["expected_by_now"].value == "17000.00"
+    assert item.facts["days_left"].value == "9"
+    assert item.facts["daily_needed"].value == "1777.78"  # 16,000 / 9
+    assert item.facts["day_basis"].value == "operating"
+    items = build_pulse([], [], PERIOD, month, goal, TODAY)
+    calendar_basis = next(i for i in items if i.code.value.startswith("goal"))
+    assert calendar_basis.facts["days_left"].value == "10"
+    assert calendar_basis.facts["day_basis"].value == "calendar"

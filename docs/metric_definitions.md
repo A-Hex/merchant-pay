@@ -34,6 +34,9 @@ the original sale, so it is never netted against collections.
 **Growth simulator exactness.** The baseline keeps the exact accepted total of the period; a projection
 scales that total (`× (1+g) × s'/s × (1+Δt)`), so +15 % is exactly +15 % of the ledger to the centime.
 
+**Simulator goal comparison (FIN-001).** `goal_gap` = projected collection − monthly goal pro-rated to the
+baseline length (`goal × days / 30`, also returned as `goal_for_period`), never the full month.
+
 **Scenario Lab (`simulation/domain/scenario_lab.py`)**: deterministic, not a forecast.
 Per channel: n = initiated, s = accepted/initiated, d = declined/initiated, t = accepted amount/accepted
 (so n·s·t is the channel's exact accepted amount). Levers in order: **volume** n×(1+g) → **mix** move a
@@ -50,7 +53,7 @@ exactly to the total change; the order changes attribution, never the total. Dec
 | Collection up / down / stable | accepted collection vs the previous equal-length window; "stable" when the change is within ±5 % |
 | What explains the gap | exact split `Δ = (n₁ − n₀)·t₀ + n₁·(t₁ − t₀)`: volume effect + average-ticket effect (the ticket effect is computed as the remainder, so the two always sum to Δ to the centime) |
 | Declines | the Radar's overall verdict; a channel is named when it holds ≥ 50 % of declined value, together with *its own* verdict (so a small channel stays "insufficient data") |
-| Monthly goal pace | month-to-date accepted (1st → today) vs a linear pace `goal × day / days_in_month`; "needed per day" = remaining ÷ days left |
+| Monthly goal pace | month-to-date accepted (1st → today) vs a linear pace over the merchant's **open days** (`goal × open days elapsed / open days in month`); "needed per day" = remaining ÷ open days left. Calendar days when no operating days are configured (FIN-002) |
 
 **Customer loyalty intelligence (`customers/domain/profiles.py`, `winback.py`)**: synthetic pseudonymous fixture only.
 Only *Accepted* transactions with a `customer_token`. Window W = last `window_days` (default 180) up to today.
