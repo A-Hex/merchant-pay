@@ -142,12 +142,12 @@ Van Westendorp pricing tests.
 
 | ID | Pri | Item | Acceptance | Effort | Status |
 |---|---|---|---|---|---|
-| FIN-001 | P0 | Pro-rate the goal in `/simulations/growth` | unit + API test | S | → Stage B |
-| DOC-001 | P0 | TEAM_PLAN/README drift; delete `PlaceholderPage.tsx` | docs match tests | S | → Stage B |
-| BR-001 | P1 | Positioning line, tagline, UMCBOT/challenge credit | login, README | S | → Stage B |
-| SEC-001/002 | P1 | Origin check on unsafe methods + security headers | integration tests | S | → Stage B |
-| FIN-002 | P1 | Goal pace on operating days | unit test | S | → Stage B |
-| REP-001 | P1 | Reports & Sharing: scoped aggregated PDF/CSV, preview, WhatsApp handoff | reconciliation, isolation, formula-injection, share-state tests | M | → Stage B |
+| FIN-001 | P0 | Pro-rate the goal in `/simulations/growth` | unit + API test | S | ✅ `a115dcf` |
+| DOC-001 | P0 | TEAM_PLAN/README drift; delete `PlaceholderPage.tsx` | docs match tests | S | ✅ `fe842b6` (+ dashboard empty state) |
+| BR-001 | P1 | Positioning line, tagline, UMCBOT/challenge credit | login, README | S | ✅ |
+| SEC-001/002 | P1 | Origin check on unsafe methods + security headers | integration tests | S | ✅ `b5b679b` |
+| FIN-002 | P1 | Goal pace on operating days | unit test | S | ✅ `ec7b395` |
+| REP-001 | P1 | Reports & Sharing: scoped aggregated PDF/CSV, preview, WhatsApp handoff | reconciliation, isolation, formula-injection, share-state tests | M | ✅ `43cfb57` + UI |
 | UX-001 | P2 | Paginate the win-back list | — | S | deferred |
 | ML-001 | P2 | Prior-sensitivity disclosure | — | S | deferred |
 | FIN-003 | P2 | Fee schedule (merchant-entered) | — | M | deferred |
@@ -179,3 +179,44 @@ is still "insufficient data" at channel level (17 attempts). Win-back shows 22 r
 their own rhythm. The Scenario Lab shows what +15 % volume is worth, and what moving e-commerce volume to
 POS adds. The merchant then shares an accurate aggregated summary with their accountant via WhatsApp,
 staying in control of the recipient and the final send.
+
+## 14. Stage B results (verified 2026-11-25)
+
+**Commands run and results.** `pytest` → **142 passed** (124 before Stage B; +18 new). `ruff check` clean.
+`tsc --noEmit` clean. `vite build` OK. `alembic`: no new migration (no schema change in Stage B).
+Live checks against the Docker API through the Vite proxy:
+- Login from the frontend origin → 204; foreign `Origin` → 403. `nosniff`, `X-Frame-Options: DENY` and CSP are present.
+- `/simulations/growth`: `goal_gap` now uses `goal_for_period` (FIN-001).
+- Report preview, PDF and CSV for `M-DEMO-01`, 7–20 Nov, all match §4: 251 356,50 DZD; 86,5 % (64/74).
+- Headless Chromium share paths:
+  - no file sharing → PDF downloaded as `ceo-pay_collections_M-DEMO-01_2026-11-07_2026-11-20.pdf`, and
+    `wa.me` opened with only the generic text (no figures);
+  - share sheet cancelled → "Partage annulé : rien n'a été envoyé";
+  - share completed → the 3.7 KB PDF was passed to `navigator.share`, and the UI says to confirm the
+    send in WhatsApp;
+  - FR and AR (RTL) rendered without console errors.
+
+**Files changed.** Backend:
+- `simulation/application/run_simulation.py` and `simulation/api/router.py` (FIN-001);
+- `analytics/domain/pulse.py` and `analytics/application/get_insights.py` (FIN-002);
+- `shared/api/security.py` (new) and `main.py` (SEC);
+- `contexts/reports/**` (new: `domain/summary.py`, `domain/csv_export.py`, `infrastructure/pdf.py`,
+  `application/use_cases.py`, `api/router.py`), `container.py`, `pyproject.toml` + `uv.lock` (reportlab 4.2.5);
+- tests: `test_simulation_api`, `test_pulse`, `test_auth_security`, `test_reports`, `test_reports_api`.
+
+Frontend:
+- `features/merchant/ReportsCard.tsx` (new), `ProfilePage.tsx`;
+- `features/simulator/SimulatorPage.tsx`, `features/dashboard/DashboardPage.tsx`;
+- `i18n/fr.json` and `ar.json`, generated `api/schema.d.ts`;
+- `components/PlaceholderPage.tsx` deleted.
+
+Docs: `README.md`, `TEAM_PLAN.md`, `metric_definitions.md`, this file.
+
+**Known limitations / deferred.**
+- The PDF is French only (Latin-1 fonts); an Arabic PDF needs an embedded font and shaping.
+- Only the Collections Summary report exists; Alerts/Activity reports are deferred.
+- No "enable WhatsApp shortcut" setting: it would have no effect beyond hiding one button.
+- Official workbook import is still untested here (the file is not in the repo).
+- Win-back pagination (UX-001), prior-sensitivity UI (ML-001), fee schedule (FIN-003), a keyboard
+  audit, and README screenshots/video remain open.
+- The real-device share sheet (Android/iOS) was simulated in Chromium, not tested on a phone.

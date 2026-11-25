@@ -1,11 +1,11 @@
 {
-  "app": { "name": "CEO-Pay", "tagline": "Pilotage intelligent de vos encaissements" },
+  "app": { "name": "CEO-Pay", "tagline": "Voyez vos encaissements. Comprenez votre performance. Décidez de la suite." },
   "nav": {
     "dashboard": "Tableau de bord", "transactions": "Transactions", "collections": "Encaissements",
     "alerts": "Alertes", "simulator": "Simulateur", "insights": "Analyses", "profile": "Profil", "customers": "Clients", "loyalty": "Fidélité"
   },
   "auth": {
-    "welcome": "Bon retour", "context": "Défi FINOVIA × ENSM × SATIM · données de paiement synthétiques", "showPassword": "Afficher le mot de passe", "hidePassword": "Masquer le mot de passe",
+    "welcome": "Bon retour", "context": "CEO-Pay · solution Merchant Pay de l'équipe UMCBOT · défi FINOVIA × ENSM × SATIM · données synthétiques", "showPassword": "Afficher le mot de passe", "hidePassword": "Masquer le mot de passe",
     "title": "Connexion à votre espace marchand", "email": "Adresse e-mail", "password": "Mot de passe",
     "submit": "Se connecter", "error": "E-mail ou mot de passe incorrect",
     "demoHint": "Compte démo : demo@ceo-pay.test / demo1234", "logout": "Déconnexion", "throttled": "Trop de tentatives échouées. Patientez 15 minutes avant de réessayer."
@@ -522,5 +522,35 @@
       "analyse": "Analyse",
       "customers": "Clients"
     }
+  },
+  "reports": {
+    "title": "Rapports et partage",
+    "intro": "Générez une synthèse agrégée de vos encaissements pour la période sélectionnée et partagez-la avec votre comptable ou un associé. Vous choisissez le destinataire et confirmez l'envoi dans WhatsApp.",
+    "preview": "Aperçu du rapport",
+    "collectionsSummary": "Synthèse des encaissements",
+    "synthetic": "Données synthétiques de démonstration",
+    "source": "Données source du défi",
+    "merchant": "Commerce",
+    "period": "Période",
+    "generated": "Généré le",
+    "currency": "Devise",
+    "aggregatedNote": "Le rapport contient uniquement des totaux (par statut et par canal) : aucune transaction détaillée, aucun identifiant client, aucune donnée de carte. Montants bruts, avant frais : ce n'est ni un relevé de règlement ni un résultat comptable.",
+    "format": "Format",
+    "fmt": {
+      "pdf": "PDF (lecture)",
+      "csv": "CSV (tableur)"
+    },
+    "download": "Télécharger",
+    "shareWhatsApp": "Partager via WhatsApp",
+    "shareTitle": "Rapport CEO-Pay",
+    "shareText": "Synthèse des encaissements CEO-Pay (fichier joint).",
+    "state": {
+      "sheet": "Partage ouvert : choisissez le destinataire et confirmez l'envoi dans WhatsApp. CEO-Pay ne voit pas si le message est envoyé.",
+      "cancelled": "Partage annulé : rien n'a été envoyé.",
+      "fallback": "Le partage de fichier n'est pas disponible sur cet appareil : {{file}} a été téléchargé et WhatsApp s'ouvre avec un court message. Joignez le fichier manuellement avant d'envoyer.",
+      "downloaded": "{{file}} téléchargé.",
+      "error": "Le rapport n'a pas pu être généré. Réessayez."
+    },
+    "privacy": "Aucun numéro de téléphone n'est demandé ni enregistré, et aucun chiffre n'est placé dans le lien WhatsApp. Chaque export est journalisé (sans son contenu)."
   }
 }

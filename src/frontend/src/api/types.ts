@@ -55,3 +55,4 @@ export type LoyaltyAccrual = S["LoyaltyAccrualOut"];
 export type ScenarioLab = S["LabOut"];
 export type ScenarioLabIn = S["LabIn"];
 export type LabScenario = S["LabScenarioOut"];
+export type CollectionsReport = S["CollectionsReportOut"];

@@ -78,6 +78,18 @@ def render_pdf(r: CollectionsReport) -> bytes:
     # header: wordmark + title
     c.setFillColor(colors.HexColor("#171717"))
     c.roundRect(x, y - 3 * mm, 9 * mm, 9 * mm, 2 * mm, fill=1, stroke=0)
+    # CEO-Pay mark: open "C" + growth arrow (same geometry as the app logo, 32-unit grid)
+    u = 9 * mm / 32
+    ox, oy = x, y - 3 * mm + 9 * mm  # top-left of the tile; reportlab y grows upwards
+    c.setStrokeColor(colors.white)
+    c.setLineCap(1)
+    c.setLineJoin(1)
+    c.setLineWidth(3 * u)
+    c.arc(ox + 7.6 * u, oy - 24.4 * u, ox + 24.4 * u, oy - 7.6 * u, 45, 270)
+    c.setLineWidth(2.4 * u)
+    c.line(ox + 12.8 * u, oy - 19.2 * u, ox + 20.6 * u, oy - 11.4 * u)
+    c.line(ox + 15.6 * u, oy - 11.2 * u, ox + 20.8 * u, oy - 11.2 * u)
+    c.line(ox + 20.8 * u, oy - 11.2 * u, ox + 20.8 * u, oy - 16.4 * u)
     text("CEO-Pay", 14, True, dx=12 * mm)
     y -= 6 * mm
     text("Synthèse des encaissements", 9, color=colors.HexColor("#525252"), dx=12 * mm)

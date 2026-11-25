@@ -4,6 +4,7 @@ import { ApiError } from "@/api/client";
 import type { Me, MerchantPatch } from "@/api/types";
 import { Button, Card, ErrorState, Spinner } from "@/components/ui";
 import { useMe, useUpdateProfile } from "@/features/auth/api";
+import { ReportsCard } from "./ReportsCard";
 import { formatMoney, formatWeekday } from "@/lib/format";
 
 const DAYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
@@ -127,6 +128,7 @@ function ProfileForm({ me }: { me: Me }) {
           )}
         </form>
       </Card>
+      <ReportsCard />
     </div>
   );
 }

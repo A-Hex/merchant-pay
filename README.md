@@ -1,11 +1,16 @@
-# CEO-Pay: Intelligent Merchant Financial Management
+# CEO-Pay: the merchant's financial command center
+
+**See your collections. Understand your performance. Decide what comes next.**
+
+*CEO-Pay — Merchant Pay solution by **UMCBOT** for FINOVIA × ENSM × SATIM.*
 
 > **FINOVIA × ENSM × SATIM *Merchant Pay* challenge.** CEO-Pay is a merchant-facing web app that turns electronic payment
 > records into reliable collection visibility, explainable alerts and transparent growth scenarios.
 
 **Design thesis:** make the financial core *boringly correct* and the intelligence *unusually
 honest*. Every KPI reconciles with the ledger, every alert shows its evidence, and every scenario
-shows its assumptions. Full specification: [`docs/blueprint.pdf`](docs/blueprint.pdf).
+shows its assumptions. Full specification: [`docs/blueprint.pdf`](docs/blueprint.pdf). Critical review and delivery plan:
+[`docs/CEO_PAY_REVIEW.md`](docs/CEO_PAY_REVIEW.md).
 
 *Naming:* the product is **CEO-Pay**; the challenge is *Merchant Pay*. Technical identifiers keep the
 original name (`merchantpay` database and package names) so existing
@@ -285,6 +290,7 @@ All under `/api/v1`. Every merchant endpoint is scoped server-side by `Depends(g
 | POST / GET | `/loyalty/simulations` | loyalty | ✅ low/base/high + break-even; every run stored |
 | POST | `/loyalty/ledger/accrue` | loyalty | ✅ owner-only pilot, idempotent |
 | GET | `/loyalty/ledger?page&size` | loyalty | ✅ summary + entries (masked customers) |
+| GET | `/reports/collections-summary` · `.pdf` · `.csv` `?date_from&date_to` | reports | ✅ aggregated, scoped, no-store, export audited |
 
 ---
 
@@ -358,6 +364,8 @@ Run these from the repository root.
 - Tenant scope comes from the server-side access mapping, never from a client-supplied ID.
   Another merchant's record returns 404.
 - Passwords are hashed with Argon2. The session is a JWT in an httpOnly, SameSite=Lax cookie.
+- State-changing requests from a foreign `Origin` are refused (403); security headers on every response.
+- Reports are aggregated only, CSV cells are formula-neutralised, exports are audited without figures.
 - Failed logins are throttled: 5 per email+IP and 20 per IP in 15 minutes, then `429` with `Retry-After`
   (in-memory, single process). Successful logins and profile edits are written to `audit_events`.
 
