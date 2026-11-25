@@ -36,12 +36,12 @@ Hours assume a ~14 h working day. Scale them if the event is shorter, and cut fr
 **Person A**
 - [ ] `PATCH /merchant/me`: `UpdateMerchantProfile` use case + `MerchantRepository.save` + audit event
       (`identity/application/use_cases.py`, `identity/api/router.py`).
-- [ ] `GET /collections/summary?a_from&a_to&b_from&b_to`: status totals for period A and period B, plus
+- [x] `GET /collections/summary?a_from&a_to&b_from&b_to`: status totals for period A and period B, plus
       per-status `compare()` (`analytics/application/`, `analytics/api/router.py`). Integration test: A total equals the sum of the ledger.
 - [ ] Login rate limit (simple in-memory counter per email+IP) in `identity/api/router.py`.
 
 **Person B**
-- [ ] Collections page (`features/collections/`): period A vs B pickers, status cards, delta badges,
+- [x] Collections page (`features/collections/`): period A vs B pickers, status cards, delta badges,
       "see transactions" deep links (`/transactions?status=…`).
 - [ ] Profile page (`features/merchant/`): show `/merchant/me`, edit form → PATCH, monthly goal input.
 - [ ] Dashboard: empty state when `total_count == 0`, a skeleton while loading, and a mobile layout check at 375 px.
@@ -49,21 +49,21 @@ Hours assume a ~14 h working day. Scale them if the event is shorter, and cut fr
 
 ### Phase 2, alerts and simulator (≈ 4 h)
 **Person A**
-- [ ] `alerts/infrastructure/sql_alert_repository.py` (map `AlertRow` ↔ `Alert`, skip insert on existing `dedupe_key`).
-- [ ] `EvaluateAlerts` use case: last 14 days vs previous 14, run `DEFAULT_RULES`, save. Also `ListAlerts`,
+- [x] `alerts/infrastructure/sql_alert_repository.py` (map `AlertRow` ↔ `Alert`, skip insert on existing `dedupe_key`).
+- [x] `EvaluateAlerts` use case: last 14 days vs previous 14, run `DEFAULT_RULES`, save. Also `ListAlerts`,
       `AcknowledgeAlert`, `ResolveAlert`.
-- [ ] Rules: `DeclineSpikeRule` (decline rate vs baseline, min 20 attempts, show the denominator),
+- [x] Rules: `DeclineSpikeRule` (decline rate vs baseline, min 20 attempts, show the denominator),
       `InactivityRule` (gap > 3× the merchant's median gap), `GoalReachedRule` (80% / 100% of the monthly goal).
-- [ ] `alerts/api/router.py`: `GET /alerts`, `POST /alerts/evaluate`, `POST /alerts/{id}/acknowledge|resolve`.
+- [x] `alerts/api/router.py`: `GET /alerts`, `POST /alerts/evaluate`, `POST /alerts/{id}/acknowledge|resolve`.
       Register it in `main.py`. Call `EvaluateAlerts` at the end of `app/seed/reset.py` so the demo has alerts.
-- [ ] `POST /simulations/growth` (`simulation/application/` + `api/`): body `{baseline_from, baseline_to,
+- [x] `POST /simulations/growth` (`simulation/application/` + `api/`): body `{baseline_from, baseline_to,
       volume_growth, acceptance_change?, ticket_change?}` → baseline, projection and assumptions. Persist a `ScenarioRunRow`.
 
 **Person B**
-- [ ] Alerts page: tabs open / acknowledged / resolved, a severity badge (strong colour **only** here), a detail
+- [x] Alerts page: tabs open / acknowledged / resolved, a severity badge (strong colour **only** here), a detail
       panel with metric, windows, threshold, observed and baseline values, a link to the evidence in the ledger, and acknowledge/resolve buttons.
-- [ ] Dashboard: an alert panel (top 3 open alerts).
-- [ ] Simulator page: volume slider/input (default +15%), advanced assumptions collapsed, a result
+- [x] Dashboard: an alert panel (top 3 open alerts).
+- [x] Simulator page: volume slider/input (default +15%), advanced assumptions collapsed, a result
       card (projected count, projected collection, Δ DZD, Δ%), an **assumptions panel**, and a reset button.
 - **Exit gate:** demo steps 4–6 work live (`docs/demo_runbook.md`).
 

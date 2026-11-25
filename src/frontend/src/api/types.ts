@@ -13,6 +13,13 @@ export type Rate = S["RateOut"];
 export type Channel = S["Channel"];
 export type TransactionStatus = S["TransactionStatus"];
 export type Granularity = S["Granularity"];
+export type Alert = S["AlertOut"];
+export type AlertList = S["AlertPageOut"];
+export type AlertEvaluation = S["EvaluationOut"];
+export type AlertState = S["AlertState"];
+export type Severity = S["Severity"];
+export type Simulation = S["SimulationOut"];
+export type CollectionsSummary = S["CollectionsSummaryOut"];
 
 export const CHANNELS: Channel[] = ["pos", "ecommerce", "mobile_app", "contactless", "bank_transfer"];
 export const STATUSES: TransactionStatus[] = ["accepted", "declined", "cancelled", "refunded"];

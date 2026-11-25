@@ -2,8 +2,8 @@ from fastapi import APIRouter, Depends, Response, status
 from pydantic import BaseModel, Field
 
 from app.config import Settings, get_settings
-from app.container import SESSION_COOKIE, get_authenticate, get_me_uc, get_scope
-from app.contexts.identity.application.use_cases import Authenticate, GetMe
+from app.container import SESSION_COOKIE, get_authenticate, get_me_uc, get_scope, get_update_merchant_profile
+from app.contexts.identity.application.use_cases import Authenticate, GetMe, UpdateMerchantProfile
 from app.shared.api.schemas import MoneyOut
 from app.shared.domain.merchant_scope import MerchantScope
 
@@ -66,5 +66,15 @@ def me(scope: MerchantScope = Depends(get_scope), uc: GetMe = Depends(get_me_uc)
                               for a in result.accessible],
     )
 
+
+@router.patch("/merchant/me", response_model=MerchantOut)
+def me_patch(body: dict, scope: MerchantScope = Depends(get_scope),
+             uc: UpdateMerchantProfile = Depends(get_update_merchant_profile)) -> MerchantOut:
+    result = uc.execute(scope.merchant_id, body)
+    return MerchantOut(
+        merchant_id=result.merchant_id, display_name=result.display_name, category=result.category,
+        timezone=result.timezone, operating_days=list(result.operating_days),
+        monthly_goal=MoneyOut.of(result.monthly_goal) if result.monthly_goal else None,
+    )
 
 # TODO(Person A): PATCH /merchant/me -> UpdateMerchantProfile

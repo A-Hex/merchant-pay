@@ -1,5 +1,6 @@
 """Application settings, read from environment variables (see /.env.example)."""
 
+from datetime import date
 from functools import lru_cache
 from pathlib import Path
 
@@ -19,6 +20,8 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:5173"]
     data_dir: Path = REPO_ROOT / "data"
     timezone: str = "Africa/Algiers"
+    # DEMO_TODAY freezes the clock (and therefore the alert windows) for a reproducible demo.
+    demo_today: date | None = None
 
 
 @lru_cache

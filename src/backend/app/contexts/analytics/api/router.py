@@ -3,7 +3,8 @@ from datetime import date
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.container import get_dashboard_uc, get_scope, get_today
+from app.container import get_collections_summary, get_dashboard_uc, get_scope, get_today
+from app.contexts.analytics.application.get_collections import GetCollectionsSummary
 from app.contexts.analytics.application.get_dashboard import GetDashboard
 from app.contexts.analytics.domain.kpis import Granularity, KpiSnapshot
 from app.contexts.analytics.domain.period_comparison import ChangeKind, PeriodChange
@@ -106,4 +107,68 @@ def dashboard(
         channels=[ChannelOut(channel=c.channel, count=c.count, count_share=RateOut.of(c.count_share),
                              accepted_amount=MoneyOut.of(c.accepted_amount),
                              amount_share=RateOut.of(c.amount_share)) for c in d.channels],
+    )
+
+
+# ---- collections (module 03): status-separated totals, period A vs period B ------------
+collections_router = APIRouter(prefix="/collections", tags=["collections"])
+
+
+class StatusSummaryOut(BaseModel):
+    status: TransactionStatus
+    count_a: int
+    count_b: int
+    amount_a: MoneyOut
+    amount_b: MoneyOut
+    count_change: ChangeOut
+    amount_change: ChangeOut
+
+
+class CollectionsSummaryOut(BaseModel):
+    period_a: PeriodOut
+    period_b: PeriodOut
+    total_count_a: int
+    total_count_b: int
+    total_count_change: ChangeOut
+    collected_a: MoneyOut
+    collected_b: MoneyOut
+    collected_change: ChangeOut
+    acceptance_rate_a: RateOut
+    acceptance_rate_b: RateOut
+    by_status: list[StatusSummaryOut]
+
+
+@collections_router.get("/summary", response_model=CollectionsSummaryOut)
+def collections_summary(
+    a_from: date | None = None,
+    a_to: date | None = None,
+    b_from: date | None = None,
+    b_to: date | None = None,
+    scope: MerchantScope = Depends(get_scope),
+    today: date = Depends(get_today),
+    uc: GetCollectionsSummary = Depends(get_collections_summary),
+) -> CollectionsSummaryOut:
+    period_a = period_from_query(a_from, a_to, today)
+    # B is optional: default to the like-for-like period immediately before A.
+    period_b = period_from_query(b_from, b_to, today) if (b_from or b_to) else period_a.previous()
+    s = uc.execute(scope, period_a, period_b)
+    a, b = s.totals_a, s.totals_b
+    return CollectionsSummaryOut(
+        period_a=PeriodOut.of(s.period_a),
+        period_b=PeriodOut.of(s.period_b),
+        total_count_a=a.total_count,
+        total_count_b=b.total_count,
+        total_count_change=ChangeOut.of(s.total_count_change),
+        collected_a=MoneyOut.of(a.gross_collected),
+        collected_b=MoneyOut.of(b.gross_collected),
+        collected_change=ChangeOut.of(s.collected_change),
+        acceptance_rate_a=RateOut.of(a.acceptance_rate),
+        acceptance_rate_b=RateOut.of(b.acceptance_rate),
+        by_status=[
+            StatusSummaryOut(status=c.status, count_a=c.a.count, count_b=c.b.count,
+                             amount_a=MoneyOut.of(c.a.amount), amount_b=MoneyOut.of(c.b.amount),
+                             count_change=ChangeOut.of(c.count_change),
+                             amount_change=ChangeOut.of(c.amount_change))
+            for c in s.by_status
+        ],
     )

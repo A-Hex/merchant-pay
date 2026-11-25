@@ -6,7 +6,9 @@ import type { Dashboard } from "@/api/types";
 import { useFilters } from "@/app/filters";
 import { KpiCard } from "@/components/KpiCard";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Card, ErrorState, Spinner } from "@/components/ui";
+import { Card, EmptyState, ErrorState, Spinner } from "@/components/ui";
+import { useAlerts } from "@/features/alerts/api";
+import { SeverityBadge } from "@/features/alerts/SeverityBadge";
 import { isRtl } from "@/i18n";
 import { formatCompactDzd, formatDate, formatMoney, formatNumber, formatPct } from "@/lib/format";
 import { useDashboard } from "./api";
@@ -51,8 +53,40 @@ export function DashboardPage() {
           </ul>
         </Card>
       </div>
-      {/* TODO(Person B): alert panel (top 3 open alerts) + insight card once /alerts exists. */}
+
+      <AlertPanel />
     </div>
+  );
+}
+
+/** Top 3 open alerts: the dashboard surfaces what needs action, the Alerts page has the rest. */
+function AlertPanel() {
+  const { t } = useTranslation();
+  const q = useAlerts("open");
+  const items = (q.data?.items ?? []).slice(0, 3);
+  return (
+    <Card title={t("dashboard.alerts")} action={
+      <Link className="text-xs text-brand-700 hover:underline" to="/alerts">
+        {t("dashboard.seeAllAlerts")}
+      </Link>
+    }>
+      {q.isPending ? <Spinner /> : q.isError ? <ErrorState onRetry={() => q.refetch()} /> :
+        items.length === 0 ? <EmptyState>{t("alerts.empty")}</EmptyState> : (
+          <ul className="divide-y divide-slate-100">
+            {items.map((a) => (
+              <li key={a.id} className="py-2 text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <SeverityBadge severity={a.severity} />
+                  <span className="text-xs text-slate-500">
+                    {t(`alerts.rules.${a.rule_code}`, { defaultValue: a.rule_code })}
+                  </span>
+                </div>
+                <p className="mt-1 text-slate-600">{a.explanation}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+    </Card>
   );
 }
 

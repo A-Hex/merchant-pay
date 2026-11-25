@@ -13,8 +13,21 @@ from fastapi import Depends, Header, HTTPException, Request, status
 from sqlalchemy.orm import Session, sessionmaker
 
 from app.config import Settings, get_settings
+from app.contexts.alerts.application.evaluate_alerts import EvaluateAlerts
+from app.contexts.alerts.application.manage_alerts import (
+    AcknowledgeAlert,
+    ListAlerts,
+    ResolveAlert,
+)
+from app.contexts.alerts.infrastructure.sql_alert_repository import SqlAlertRepository
+from app.contexts.analytics.application.get_collections import GetCollectionsSummary
 from app.contexts.analytics.application.get_dashboard import GetDashboard
-from app.contexts.identity.application.use_cases import Authenticate, GetMe, ResolveScope
+from app.contexts.identity.application.use_cases import (
+    Authenticate,
+    GetMe,
+    ResolveScope,
+    UpdateMerchantProfile,
+)
 from app.contexts.identity.infrastructure.security import Argon2PasswordHasher, JwtTokenService
 from app.contexts.identity.infrastructure.sql_repositories import (
     SqlAccessRepository,
@@ -23,6 +36,8 @@ from app.contexts.identity.infrastructure.sql_repositories import (
 )
 from app.contexts.ledger.application.queries import GetTransaction, SearchTransactions
 from app.contexts.ledger.infrastructure.sql_transaction_repository import SqlTransactionRepository
+from app.contexts.simulation.application.run_simulation import RunGrowthSimulation
+from app.contexts.simulation.infrastructure.sql_scenario_repository import SqlScenarioRunRepository
 from app.db.session import make_engine, make_session_factory
 from app.shared.domain.merchant_scope import MerchantScope
 
@@ -49,7 +64,9 @@ def get_db() -> Iterator[Session]:
 
 
 def get_today(settings: Settings = Depends(get_settings)) -> date:
-    """Injectable clock: override in tests/demo to freeze 'today'."""
+    """Injectable clock: DEMO_TODAY (or a test override) freezes 'today' for reproducibility."""
+    if settings.demo_today is not None:
+        return settings.demo_today
     return datetime.now(ZoneInfo(settings.timezone)).date()
 
 
@@ -89,6 +106,16 @@ def get_me_uc(db: Session = Depends(get_db)) -> GetMe:
     return GetMe(SqlUserRepository(db), SqlAccessRepository(db), SqlMerchantRepository(db))
 
 
+def get_merchant_repository(db: Session = Depends(get_db)) -> SqlMerchantRepository:
+    return SqlMerchantRepository(db)
+
+
+def get_update_merchant_profile(
+    merchants: SqlMerchantRepository = Depends(get_merchant_repository),
+) -> UpdateMerchantProfile:
+    return UpdateMerchantProfile(merchants)
+
+
 # ---- ledger -------------------------------------------------------------------
 def get_transaction_repository(db: Session = Depends(get_db)) -> SqlTransactionRepository:
     return SqlTransactionRepository(db)
@@ -108,4 +135,48 @@ def get_dashboard_uc(repo=Depends(get_transaction_repository)) -> GetDashboard:
     return GetDashboard(repo)
 
 
-# TODO: alerts / simulation providers go here (same pattern).
+def get_collections_summary(
+    repo=Depends(get_transaction_repository),
+) -> GetCollectionsSummary:
+    return GetCollectionsSummary(repo)
+
+
+# ---- alerts -------------------------------------------------------------------
+def get_alert_repository(db: Session = Depends(get_db)) -> SqlAlertRepository:
+    return SqlAlertRepository(db)
+
+
+def get_evaluate_alerts(
+    repo: SqlAlertRepository = Depends(get_alert_repository),
+    merchants: SqlMerchantRepository = Depends(get_merchant_repository),
+    transactions: SqlTransactionRepository = Depends(get_transaction_repository),
+) -> EvaluateAlerts:
+    # alerts.TransactionReader + alerts.MerchantProfileReader ports <- ledger/identity adapters
+    return EvaluateAlerts(transactions, repo, merchants)
+
+
+def get_list_alerts(repo: SqlAlertRepository = Depends(get_alert_repository)) -> ListAlerts:
+    return ListAlerts(repo)
+
+
+def get_acknowledge_alert(
+    repo: SqlAlertRepository = Depends(get_alert_repository),
+) -> AcknowledgeAlert:
+    return AcknowledgeAlert(repo)
+
+
+def get_resolve_alert(repo: SqlAlertRepository = Depends(get_alert_repository)) -> ResolveAlert:
+    return ResolveAlert(repo)
+
+
+# ---- simulation ---------------------------------------------------------------
+def get_scenario_repository(db: Session = Depends(get_db)) -> SqlScenarioRunRepository:
+    return SqlScenarioRunRepository(db)
+
+
+def get_run_growth_simulation(
+    transactions: SqlTransactionRepository = Depends(get_transaction_repository),
+    scenarios: SqlScenarioRunRepository = Depends(get_scenario_repository),
+    merchants: SqlMerchantRepository = Depends(get_merchant_repository),
+) -> RunGrowthSimulation:
+    return RunGrowthSimulation(transactions, scenarios, merchants)

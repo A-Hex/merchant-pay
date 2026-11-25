@@ -3,8 +3,14 @@ from decimal import Decimal
 
 import pytest
 
-from app.contexts.alerts.domain.alert import AlertState
-from app.contexts.alerts.domain.rules import CollectionDropRule, RuleContext
+from app.contexts.alerts.domain.alert import AlertState, Severity
+from app.contexts.alerts.domain.rules import (
+    CollectionDropRule,
+    DeclineSpikeRule,
+    GoalReachedRule,
+    InactivityRule,
+    RuleContext,
+)
 from app.contexts.analytics.domain.kpis import compute_kpis
 from app.contexts.simulation.domain.growth import Assumptions, Baseline, simulate
 from app.shared.domain.date_range import DateRange
@@ -30,6 +36,51 @@ def test_collection_drop_fires_at_20_percent_with_explanation():
 def test_collection_drop_quiet_on_small_samples():
     previous = [tx(f"p{i}", A, "1000", "2026-10-30 10:00") for i in range(3)]
     assert CollectionDropRule().evaluate(_ctx([], previous)) is None
+
+
+def test_decline_spike_shows_denominator_and_baseline():
+    previous = [tx(f"p{i}", A, "1000", "2026-10-30 10:00") for i in range(17)] + [
+        tx(f"pd{i}", D, "1000", "2026-10-30 11:00") for i in range(3)]
+    current = [tx(f"c{i}", A, "1000") for i in range(10)] + [
+        tx(f"cd{i}", D, "1000") for i in range(10)]
+    alert = DeclineSpikeRule().evaluate(_ctx(current, previous))
+    assert alert is not None
+    assert alert.observed_value == Decimal("0.5") and alert.baseline_value == Decimal("0.15")
+    assert "10 / 20" in alert.explanation and "3 / 20" in alert.explanation
+    assert alert.severity is Severity.CRITICAL
+
+
+def test_decline_spike_respects_minimum_sample():
+    previous = [tx(f"p{i}", A, "1000", "2026-10-30 10:00") for i in range(10)]
+    current = [tx(f"c{i}", D, "1000") for i in range(11)]
+    assert DeclineSpikeRule().evaluate(_ctx(current, previous)) is None
+
+
+def test_inactivity_fires_after_three_times_the_median_gap():
+    history = [tx(f"h{d}-{i}", A, "1000", f"2026-11-{d:02d} 10:00")
+               for d in range(1, 7) for i in range(2)]
+    alert = InactivityRule().evaluate(_ctx([], history))
+    assert alert is not None and alert.observed_value == Decimal(14)  # last activity 2026-11-06
+    assert alert.baseline_value == Decimal(1)
+    assert alert.severity is Severity.CRITICAL
+
+
+def test_goal_rule_reports_month_to_date_progress():
+    ctx = RuleContext("M1", date(2026, 11, 20), CUR, CUR.previous(), [], [],
+                      monthly_goal=Money.of(1000), month_to_date=[tx("g1", A, "850")])
+    alert = GoalReachedRule().evaluate(ctx)
+    assert alert is not None and alert.severity is Severity.INFO
+    assert "85%" in alert.explanation and alert.delta_pct == Decimal("-0.15")
+    assert alert.window == DateRange.inclusive(date(2026, 11, 1), date(2026, 11, 20))
+
+
+def test_goal_rule_needs_a_goal_and_eighty_percent():
+    no_goal = RuleContext("M1", date(2026, 11, 20), CUR, CUR.previous(), [], [],
+                          month_to_date=[tx("g1", A, "850")])
+    assert GoalReachedRule().evaluate(no_goal) is None
+    below = RuleContext("M1", date(2026, 11, 20), CUR, CUR.previous(), [], [],
+                        monthly_goal=Money.of(1000), month_to_date=[tx("g1", A, "500")])
+    assert GoalReachedRule().evaluate(below) is None
 
 
 def test_alert_state_machine():

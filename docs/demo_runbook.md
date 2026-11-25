@@ -3,7 +3,7 @@
 ## Before the jury
 ```bash
 make up seed                                   # clean, deterministic state
-cp src/frontend/.env.example src/frontend/.env.local   # VITE_DEMO_TODAY=2026-11-20
+cp src/frontend/.env.example src/frontend/.env.local   # VITE_DEMO_TODAY=2026-11-20 (API: DEMO_TODAY)
 make dev-front
 ```
 - Log in once as `demo@merchantpay.test` / `demo1234` to warm the caches.
