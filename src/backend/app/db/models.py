@@ -4,7 +4,7 @@ The full schema for all contexts is defined up front so the two developers never
 create conflicting Alembic revisions on the hackathon day.
 """
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from sqlalchemy import (
     JSON,
@@ -74,8 +74,11 @@ class TransactionRow(Base):
     category: Mapped[str] = mapped_column(String(100))
     data_origin: Mapped[str] = mapped_column(String(32))
     source_batch_id: Mapped[str] = mapped_column(ForeignKey("import_batches.batch_id"))
+    # optional pseudonymous merchant-scoped customer reference (enriched synthetic data only)
+    customer_token: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
-    __table_args__ = (Index("ix_transactions_merchant_time", "merchant_id", "occurred_at"),)
+    __table_args__ = (Index("ix_transactions_merchant_time", "merchant_id", "occurred_at"),
+                      Index("ix_transactions_merchant_customer", "merchant_id", "customer_token"))
 
 
 class AlertRow(Base):
@@ -117,3 +120,18 @@ class AuditEventRow(Base):
     action: Mapped[str] = mapped_column(String(64))
     entity_ref: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class CustomerActionRow(Base):
+    """Append-only log of the merchant's win-back decisions; latest row per customer = current state."""
+
+    __tablename__ = "customer_actions"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.merchant_id"))
+    customer_token: Mapped[str] = mapped_column(String(64))
+    action: Mapped[str] = mapped_column(String(16))  # dismiss | snooze | contacted | clear
+    snooze_until: Mapped[date | None] = mapped_column(Date, nullable=True)
+    actor_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (Index("ix_customer_actions_lookup", "merchant_id", "customer_token", "created_at"),)

@@ -27,6 +27,14 @@ from app.contexts.analytics.application.get_insights import (
     GetDeclineRadar,
     GetPulse,
 )
+from app.contexts.customers.application.use_cases import (
+    GetCustomer,
+    GetCustomerOverview,
+    GetReengagement,
+    ListCustomers,
+    RecordDecision,
+)
+from app.contexts.customers.infrastructure.sql_decision_repository import SqlDecisionRepository
 from app.contexts.identity.application.use_cases import (
     Authenticate,
     GetMe,
@@ -210,3 +218,32 @@ def get_run_growth_simulation(
     merchants: SqlMerchantRepository = Depends(get_merchant_repository),
 ) -> RunGrowthSimulation:
     return RunGrowthSimulation(transactions, scenarios, merchants)
+
+
+# ---- customers (loyalty intelligence, win-back) ------------------------------------------------
+def get_decision_repository(db: Session = Depends(get_db)) -> SqlDecisionRepository:
+    return SqlDecisionRepository(db)
+
+
+def get_customer_overview_uc(repo=Depends(get_transaction_repository)) -> GetCustomerOverview:
+    return GetCustomerOverview(repo)
+
+
+def get_list_customers_uc(repo=Depends(get_transaction_repository)) -> ListCustomers:
+    return ListCustomers(repo)
+
+
+def get_customer_detail_uc(repo=Depends(get_transaction_repository),
+                           decisions=Depends(get_decision_repository)) -> GetCustomer:
+    return GetCustomer(repo, decisions)
+
+
+def get_reengagement_uc(repo=Depends(get_transaction_repository),
+                        decisions=Depends(get_decision_repository)) -> GetReengagement:
+    return GetReengagement(repo, decisions)
+
+
+def get_record_decision_uc(repo=Depends(get_transaction_repository),
+                           decisions=Depends(get_decision_repository),
+                           audit=Depends(get_audit_log)) -> RecordDecision:
+    return RecordDecision(repo, decisions, audit)

@@ -39,6 +39,28 @@ the original sale, so it is never netted against collections.
 | Declines | the Radar's overall verdict; a channel is named when it holds ≥ 50 % of declined value, together with *its own* verdict (so a small channel stays "insufficient data") |
 | Monthly goal pace | month-to-date accepted (1st → today) vs a linear pace `goal × day / days_in_month`; "needed per day" = remaining ÷ days left |
 
+**Customer loyalty intelligence (`customers/domain/profiles.py`, `winback.py`)**: synthetic pseudonymous fixture only.
+Only *Accepted* transactions with a `customer_token`. Window W = last `window_days` (default 180) up to today.
+| Metric | Definition |
+|---|---|
+| Coverage | tokenised accepted tx in W / all accepted tx in W (always displayed) |
+| Eligible customers | customers with ≥ 1 accepted tx in W; < 20 → "insufficient history" |
+| Recency R | days since the last accepted purchase |
+| Frequency F | accepted tx in W |
+| Historical accepted value M | accepted amount in W. **Not profit, not lifetime value.** Refunds are not subtracted (no link to the original sale) |
+| Repeat rate | customers with F ≥ 2 / eligible customers |
+| New vs returning (period P) | new = first-ever accepted purchase in P; returning = bought before P and again in P |
+| Segments (segments-v1) | New (1 purchase, < 30 d) · One-time (1 purchase, older) · Lapsed · At-risk (from win-back) · Loyal (F ≥ 4 over ≥ 60 d) · Active (other repeat) |
+| High value | a flag, never a segment: M strictly above the 80th percentile (nearest rank) of eligible customers; null below 20 customers |
+
+**Win-back radar (winback-v1)**: heuristic risk band, **not a probability**.
+Baseline = median gap between distinct purchase days: personal with ≥ 2 intervals, else pooled over the
+merchant's repeat customers (≥ 20 intervals), else "insufficient history". Spread σ = 1.4826 × MAD.
+For the current gap g: watch ≥ max(1.5·m, m + 2σ, 7 d); at risk ≥ max(2.5·m, m + 4σ, 14 d); lapsed ≥ max(4·m, 60 d).
+Single-purchase customers are "not repeat" (no rhythm to drift from). Suggestions (reengage-v1): at-risk +
+high value → personal follow-up; at-risk → general offer; watch → no action yet (re-check date shown);
+lapsed → low-priority offer. Nothing is sent automatically.
+
 **Numerical safeguards**
 - Money is stored as integer centimes and converted with `Decimal`, ROUND_HALF_UP. The API returns
   `{amount: "123.45", centimes: 12345}`. The frontend only formats the value; it never computes with it.

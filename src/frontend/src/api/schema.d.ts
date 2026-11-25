@@ -260,6 +260,91 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/customers/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overview */
+        get: operations["overview_api_v1_customers_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/reengagement": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reengagement */
+        get: operations["reengagement_api_v1_customers_reengagement_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Customers */
+        get: operations["list_customers_api_v1_customers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Customer Detail */
+        get: operations["customer_detail_api_v1_customers__token__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/customers/{token}/decisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record Decision */
+        post: operations["record_decision_api_v1_customers__token__decisions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -364,17 +449,34 @@ export interface components {
             /** Ticket Change */
             ticket_change: number;
         };
-        /** BaselineOut */
-        BaselineOut: {
-            period: components["schemas"]["PeriodOut"];
-            /** Total Count */
-            total_count: number;
-            /** Accepted Count */
-            accepted_count: number;
-            /** Acceptance Share */
-            acceptance_share: number;
-            average_ticket: components["schemas"]["MoneyOut"];
-            gross_collection: components["schemas"]["MoneyOut"];
+        /**
+         * Availability
+         * @enum {string}
+         */
+        Availability: "available" | "no_customer_identifier" | "insufficient_history";
+        /**
+         * BaselineSource
+         * @enum {string}
+         */
+        BaselineSource: "personal" | "pooled";
+        /**
+         * BookOut
+         * @description Context every customer response carries: window, coverage, rules, availability.
+         */
+        BookOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            window: components["schemas"]["PeriodOut"];
+            availability: components["schemas"]["Availability"];
+            /** Eligible Customers */
+            eligible_customers: number;
+            coverage: components["schemas"]["CoverageOut"];
+            pooled_baseline: components["schemas"]["app__contexts__customers__api__router__BaselineOut"] | null;
+            high_value_threshold: components["schemas"]["MoneyOut"] | null;
+            rules: components["schemas"]["RulesOut"];
         };
         /** BucketOut */
         BucketOut: {
@@ -430,6 +532,51 @@ export interface components {
             /** By Status */
             by_status: components["schemas"]["StatusSummaryOut"][];
         };
+        /** CoverageOut */
+        CoverageOut: {
+            /** Accepted In Window */
+            accepted_in_window: number;
+            /** Tokenised In Window */
+            tokenised_in_window: number;
+            share: components["schemas"]["RateOut"];
+            accepted_value_in_window: components["schemas"]["MoneyOut"];
+            tokenised_value_in_window: components["schemas"]["MoneyOut"];
+        };
+        /** CustomerDetailOut */
+        CustomerDetailOut: {
+            book: components["schemas"]["BookOut"];
+            customer: components["schemas"]["ProfileOut"];
+            /** Statuses */
+            statuses: components["schemas"]["StatusCountOut"][];
+            /** Recent */
+            recent: components["schemas"]["CustomerTxOut"][];
+            decision: components["schemas"]["DecisionOut"] | null;
+        };
+        /** CustomerPageOut */
+        CustomerPageOut: {
+            book: components["schemas"]["BookOut"];
+            /** Items */
+            items: components["schemas"]["ProfileOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Size */
+            size: number;
+        };
+        /** CustomerTxOut */
+        CustomerTxOut: {
+            /** Transaction Id */
+            transaction_id: string;
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            amount: components["schemas"]["MoneyOut"];
+            channel: components["schemas"]["Channel"];
+            status: components["schemas"]["TransactionStatus"];
+        };
         /** DashboardOut */
         DashboardOut: {
             period: components["schemas"]["PeriodOut"];
@@ -457,6 +604,28 @@ export interface components {
              */
             day: string;
             total: components["schemas"]["BucketOut"];
+        };
+        /**
+         * Decision
+         * @enum {string}
+         */
+        Decision: "dismiss" | "snooze" | "contacted" | "clear";
+        /** DecisionIn */
+        DecisionIn: {
+            decision: components["schemas"]["Decision"];
+            /** Snooze Until */
+            snooze_until?: string | null;
+        };
+        /** DecisionOut */
+        DecisionOut: {
+            decision: components["schemas"]["Decision"];
+            /** Snooze Until */
+            snooze_until: string | null;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
         };
         /** DeclineEstimateOut */
         DeclineEstimateOut: {
@@ -500,6 +669,25 @@ export interface components {
             current_period: components["schemas"]["PeriodOut"];
             previous_period: components["schemas"]["PeriodOut"];
         };
+        /** EvidenceOut */
+        EvidenceOut: {
+            status: components["schemas"]["ReturnStatus"];
+            /**
+             * Last Purchase
+             * Format: date
+             */
+            last_purchase: string;
+            /** Gap Days */
+            gap_days: number;
+            /** Purchase Days */
+            purchase_days: number;
+            baseline: components["schemas"]["app__contexts__customers__api__router__BaselineOut"] | null;
+            thresholds: components["schemas"]["ThresholdsOut"] | null;
+            /** Ratio */
+            ratio: number | null;
+            /** Rule Version */
+            rule_version: string;
+        };
         /**
          * FactKind
          * @enum {string}
@@ -516,6 +704,14 @@ export interface components {
          * @enum {string}
          */
         Granularity: "day" | "week" | "month";
+        /** GroupOut */
+        GroupOut: {
+            /** Customers */
+            customers: number;
+            /** Transactions */
+            transactions: number;
+            accepted_value: components["schemas"]["MoneyOut"];
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -616,6 +812,40 @@ export interface components {
              */
             currency: string;
         };
+        /** MonthOut */
+        MonthOut: {
+            /**
+             * Month Start
+             * Format: date
+             */
+            month_start: string;
+            /** Complete */
+            complete: boolean;
+            /** Active */
+            active: number;
+            /** New */
+            new: number;
+            /** Returning */
+            returning: number;
+        };
+        /** NewVsReturningOut */
+        NewVsReturningOut: {
+            period: components["schemas"]["PeriodOut"];
+            new: components["schemas"]["GroupOut"];
+            returning: components["schemas"]["GroupOut"];
+        };
+        /** OverviewOut */
+        OverviewOut: {
+            book: components["schemas"]["BookOut"];
+            repeat_rate: components["schemas"]["RateOut"];
+            /** Segments */
+            segments: components["schemas"]["SegmentRowOut"][];
+            /** Statuses */
+            statuses: components["schemas"]["StatusRowOut"][];
+            new_vs_returning: components["schemas"]["NewVsReturningOut"];
+            /** Monthly */
+            monthly: components["schemas"]["MonthOut"][];
+        };
         /** PeriodOut */
         PeriodOut: {
             /**
@@ -628,6 +858,34 @@ export interface components {
              * Format: date
              */
             date_to: string;
+        };
+        /** ProfileOut */
+        ProfileOut: {
+            /** Token */
+            token: string;
+            /** Alias */
+            alias: string;
+            /**
+             * First Purchase
+             * Format: date
+             */
+            first_purchase: string;
+            /**
+             * Last Purchase
+             * Format: date
+             */
+            last_purchase: string;
+            /** Lifetime Purchases */
+            lifetime_purchases: number;
+            /** Recency Days */
+            recency_days: number;
+            /** Frequency */
+            frequency: number;
+            monetary: components["schemas"]["MoneyOut"];
+            segment: components["schemas"]["Segment"];
+            /** High Value */
+            high_value: boolean | null;
+            evidence: components["schemas"]["EvidenceOut"];
         };
         /** ProjectionOut */
         ProjectionOut: {
@@ -680,6 +938,85 @@ export interface components {
             /** Value */
             value: number | null;
         };
+        /** ReengageEntryOut */
+        ReengageEntryOut: {
+            customer: components["schemas"]["ProfileOut"];
+            suggestion: components["schemas"]["Suggestion"];
+            /** Recheck On */
+            recheck_on: string | null;
+            decision: components["schemas"]["DecisionOut"] | null;
+            /** Hidden */
+            hidden: boolean;
+        };
+        /** ReengagementOut */
+        ReengagementOut: {
+            book: components["schemas"]["BookOut"];
+            /** Rule Version */
+            rule_version: string;
+            /** Entries */
+            entries: components["schemas"]["ReengageEntryOut"][];
+            /** Hidden Count */
+            hidden_count: number;
+        };
+        /**
+         * ReturnStatus
+         * @enum {string}
+         */
+        ReturnStatus: "normal" | "watch" | "at_risk" | "lapsed" | "insufficient_history" | "not_repeat";
+        /** RulesOut */
+        RulesOut: {
+            /** Segments Version */
+            segments_version: string;
+            /** Window Days */
+            window_days: number;
+            /** New Days */
+            new_days: number;
+            /** Loyal Min Tx */
+            loyal_min_tx: number;
+            /** Loyal Min Span Days */
+            loyal_min_span_days: number;
+            /** High Value Quantile */
+            high_value_quantile: number;
+            /** Min Customers */
+            min_customers: number;
+            /** Winback Version */
+            winback_version: string;
+            /** Min Personal Intervals */
+            min_personal_intervals: number;
+            /** Min Pooled Intervals */
+            min_pooled_intervals: number;
+            /** Watch Ratio */
+            watch_ratio: number;
+            /** At Risk Ratio */
+            at_risk_ratio: number;
+            /** Lapsed Ratio */
+            lapsed_ratio: number;
+            /** K Watch */
+            k_watch: number;
+            /** K Risk */
+            k_risk: number;
+            /** Watch Min Days */
+            watch_min_days: number;
+            /** At Risk Min Days */
+            at_risk_min_days: number;
+            /** Lapsed Min Days */
+            lapsed_min_days: number;
+        };
+        /**
+         * Segment
+         * @enum {string}
+         */
+        Segment: "new" | "one_time" | "active" | "loyal" | "at_risk" | "lapsed";
+        /** SegmentRowOut */
+        SegmentRowOut: {
+            /** Customers */
+            customers: number;
+            /** Transactions */
+            transactions: number;
+            accepted_value: components["schemas"]["MoneyOut"];
+            segment: components["schemas"]["Segment"];
+            value_share: components["schemas"]["RateOut"];
+        };
         /** SeriesPointOut */
         SeriesPointOut: {
             /**
@@ -720,11 +1057,27 @@ export interface components {
         };
         /** SimulationOut */
         SimulationOut: {
-            baseline: components["schemas"]["BaselineOut"];
+            baseline: components["schemas"]["app__contexts__simulation__api__router__BaselineOut"];
             assumptions: components["schemas"]["AssumptionsOut"];
             projection: components["schemas"]["ProjectionOut"];
             monthly_goal: components["schemas"]["MoneyOut"] | null;
             goal_gap: components["schemas"]["MoneyOut"] | null;
+        };
+        /** StatusCountOut */
+        StatusCountOut: {
+            status: components["schemas"]["TransactionStatus"];
+            /** Count */
+            count: number;
+            amount: components["schemas"]["MoneyOut"];
+        };
+        /** StatusRowOut */
+        StatusRowOut: {
+            /** Customers */
+            customers: number;
+            /** Transactions */
+            transactions: number;
+            accepted_value: components["schemas"]["MoneyOut"];
+            status: components["schemas"]["ReturnStatus"];
         };
         /** StatusSummaryOut */
         StatusSummaryOut: {
@@ -744,6 +1097,20 @@ export interface components {
             /** Count */
             count: number;
             amount: components["schemas"]["MoneyOut"];
+        };
+        /**
+         * Suggestion
+         * @enum {string}
+         */
+        Suggestion: "service_follow_up" | "general_offer" | "no_action_yet" | "low_priority_offer";
+        /** ThresholdsOut */
+        ThresholdsOut: {
+            /** Watch Days */
+            watch_days: number;
+            /** At Risk Days */
+            at_risk_days: number;
+            /** Lapsed Days */
+            lapsed_days: number;
         };
         /**
          * Tone
@@ -812,6 +1179,28 @@ export interface components {
             occurrences: number;
             total: components["schemas"]["BucketOut"];
             average_amount_per_day: components["schemas"]["MoneyOut"] | null;
+        };
+        /** BaselineOut */
+        app__contexts__customers__api__router__BaselineOut: {
+            source: components["schemas"]["BaselineSource"];
+            /** Median Days */
+            median_days: number;
+            /** Spread Days */
+            spread_days: number;
+            /** Intervals */
+            intervals: number;
+        };
+        /** BaselineOut */
+        app__contexts__simulation__api__router__BaselineOut: {
+            period: components["schemas"]["PeriodOut"];
+            /** Total Count */
+            total_count: number;
+            /** Accepted Count */
+            accepted_count: number;
+            /** Acceptance Share */
+            acceptance_share: number;
+            average_ticket: components["schemas"]["MoneyOut"];
+            gross_collection: components["schemas"]["MoneyOut"];
         };
     };
     responses: never;
@@ -1335,6 +1724,185 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SimulationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_api_v1_customers_overview_get: {
+        parameters: {
+            query?: {
+                window_days?: number;
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OverviewOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reengagement_api_v1_customers_reengagement_get: {
+        parameters: {
+            query?: {
+                window_days?: number;
+                include_hidden?: boolean;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReengagementOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_customers_api_v1_customers_get: {
+        parameters: {
+            query?: {
+                window_days?: number;
+                segment?: components["schemas"]["Segment"] | null;
+                status?: components["schemas"]["ReturnStatus"] | null;
+                high_value?: boolean | null;
+                page?: number;
+                size?: number;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerPageOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    customer_detail_api_v1_customers__token__get: {
+        parameters: {
+            query?: {
+                window_days?: number;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomerDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_decision_api_v1_customers__token__decisions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DecisionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DecisionOut"];
                 };
             };
             /** @description Validation Error */
