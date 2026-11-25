@@ -330,6 +330,8 @@ Run these from the repository root.
 - Tenant scope comes from the server-side access mapping, never from a client-supplied ID.
   Another merchant's record returns 404.
 - Passwords are hashed with Argon2. The session is a JWT in an httpOnly, SameSite=Lax cookie.
+- Failed logins are throttled: 5 per email+IP and 20 per IP in 15 minutes, then `429` with `Retry-After`
+  (in-memory, single process). Successful logins and profile edits are written to `audit_events`.
 
 ## 12. Tech stack and license
 
