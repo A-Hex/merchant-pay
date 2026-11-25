@@ -1,7 +1,8 @@
 import logging
-from typing import Literal
+from datetime import UTC, datetime
+from typing import Annotated, Literal
 
-from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi import APIRouter, Depends, Query, Request, Response, status
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.config import Settings, get_settings
@@ -9,18 +10,29 @@ from app.container import (
     SESSION_COOKIE,
     LoginThrottle,
     get_authenticate,
+    get_current_user_id,
+    get_login_history_uc,
     get_login_throttle,
     get_me_uc,
+    get_record_login_event,
     get_scope,
+    get_token_service,
     get_update_merchant_profile,
 )
 from app.contexts.identity.application.use_cases import (
     Authenticate,
+    GetLoginHistory,
     GetMe,
     ProfileChanges,
+    RecordLoginEvent,
     UpdateMerchantProfile,
 )
-from app.contexts.identity.domain.model import Merchant
+from app.contexts.identity.domain.model import (
+    LOGIN_HISTORY_RETENTION_DAYS,
+    LoginOutcome,
+    Merchant,
+    device_label,
+)
 from app.shared.api.schemas import MoneyOut
 from app.shared.domain.errors import InvalidCredentials, TooManyAttempts
 from app.shared.domain.merchant_scope import MerchantScope
@@ -60,26 +72,65 @@ class MeOut(BaseModel):
 def login(body: LoginIn, request: Request, response: Response,
           uc: Authenticate = Depends(get_authenticate),
           throttle: LoginThrottle = Depends(get_login_throttle),
+          events: RecordLoginEvent = Depends(get_record_login_event),
           settings: Settings = Depends(get_settings)) -> None:
     # Direct peer address. Behind a reverse proxy, configure uvicorn --proxy-headers with trusted IPs.
     ip = request.client.host if request.client else "unknown"
+    agent = request.headers.get("user-agent", "")
+    now = datetime.now(UTC)
     wait = throttle.retry_after(body.email, ip)
     if wait is not None:
         log.warning("login throttled ip=%s retry_after=%ss", ip, wait)
+        events.for_email(body.email, LoginOutcome.THROTTLED, ip, agent, now)
         raise TooManyAttempts(wait)
     try:
         token = uc.execute(body.email, body.password)
     except InvalidCredentials:
         throttle.record_failure(body.email, ip)
+        events.for_email(body.email, LoginOutcome.FAILURE, ip, agent, now)
         raise
     throttle.reset(body.email, ip)
+    events.for_email(body.email, LoginOutcome.SUCCESS, ip, agent, now)
     response.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax",
                         secure=settings.cookie_secure, max_age=settings.jwt_ttl_minutes * 60)
 
 
 @router.post("/auth/logout", status_code=status.HTTP_204_NO_CONTENT)
-def logout(response: Response) -> None:
+def logout(request: Request, response: Response, tokens=Depends(get_token_service),
+           events: RecordLoginEvent = Depends(get_record_login_event)) -> None:
+    token = request.cookies.get(SESSION_COOKIE)
+    user_id = tokens.decode(token) if token else None
+    if user_id is not None:
+        events.for_user(user_id, LoginOutcome.LOGOUT, request.client.host if request.client else "unknown",
+                        request.headers.get("user-agent", ""), datetime.now(UTC))
     response.delete_cookie(SESSION_COOKIE)
+
+
+class LoginEventOut(BaseModel):
+    occurred_at: datetime
+    outcome: LoginOutcome
+    ip: str
+    device: str  # browser family and OS only, parsed from the User-Agent
+
+
+class LoginHistoryOut(BaseModel):
+    events: list[LoginEventOut]
+    failures_last_30_days: int  # failed + throttled attempts on this account
+    previous_success: datetime | None
+    retention_days: int
+
+
+@router.get("/auth/history", response_model=LoginHistoryOut)
+def login_history(limit: Annotated[int, Query(ge=1, le=100)] = 20,
+                  user_id: int = Depends(get_current_user_id),
+                  uc: GetLoginHistory = Depends(get_login_history_uc)) -> LoginHistoryOut:
+    """The signed-in user's own authentication events. Never another user's, whatever the merchant."""
+    h = uc.execute(user_id, datetime.now(UTC), limit)
+    return LoginHistoryOut(
+        events=[LoginEventOut(occurred_at=e.occurred_at, outcome=e.outcome, ip=e.ip,
+                              device=device_label(e.user_agent)) for e in h.events],
+        failures_last_30_days=h.failures_last_30_days, previous_success=h.previous_success,
+        retention_days=LOGIN_HISTORY_RETENTION_DAYS)
 
 
 @router.get("/merchant/me", response_model=MeOut)

@@ -269,6 +269,7 @@ All under `/api/v1`. Every merchant endpoint is scoped server-side by `Depends(g
 |---|---|---|---|
 | POST | `/auth/login` · `/auth/logout` | identity | ✅ |
 | GET | `/merchant/me` | identity | ✅ |
+| GET | `/auth/history?limit` | identity | ✅ signed-in user's own login history (90 days) |
 | PATCH | `/merchant/me` | identity | ✅ owner-only, audited |
 | GET | `/transactions?date_from&date_to&status&channel&q&page&size` | ledger | ✅ |
 | GET | `/transactions/{id}` | ledger | ✅ |
@@ -319,6 +320,8 @@ Run these from the repository root.
 | [`docs/TEAM_PLAN.md`](docs/TEAM_PLAN.md) | you start the day, or finish a task and need the next one |
 | [`docs/architecture.md`](docs/architecture.md) | you add code: diagrams, dependency rule, DI, data model, recipes |
 | [`docs/metric_definitions.md`](docs/metric_definitions.md) | you touch any number shown to the merchant |
+| [`docs/AUTH_SPEC.md`](docs/AUTH_SPEC.md) | you touch login, sessions, roles, login history or the cross-site guard |
+| [`docs/CEO_PAY_REVIEW.md`](docs/CEO_PAY_REVIEW.md) | you want the critical review, scorecard and backlog |
 | [`docs/demo_runbook.md`](docs/demo_runbook.md) | you rehearse or present |
 | [`docs/blueprint.pdf`](docs/blueprint.pdf) | you need the official scope, rubric or rationale |
 

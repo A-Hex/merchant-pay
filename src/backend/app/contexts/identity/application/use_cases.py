@@ -1,14 +1,16 @@
 from dataclasses import dataclass, replace
+from datetime import datetime, timedelta
 
 from app.contexts.identity.application.ports import (
     AccessRepository,
     AuditLog,
+    LoginHistoryRepository,
     MerchantRepository,
     PasswordHasher,
     TokenService,
     UserRepository,
 )
-from app.contexts.identity.domain.model import Merchant, MerchantAccess, Role, User
+from app.contexts.identity.domain.model import LoginEvent, LoginOutcome, Merchant, MerchantAccess, Role, User
 from app.shared.domain.errors import DomainError, Forbidden, InvalidCredentials, NotFound
 from app.shared.domain.merchant_scope import MerchantScope
 from app.shared.domain.money import Money
@@ -121,3 +123,48 @@ class UpdateMerchantProfile:
         self._audit.record(scope.user_id, "merchant.profile_updated",
                            f"merchant:{merchant.merchant_id} fields:{','.join(sorted(updates))}")
         return updated
+
+
+# ---- login history -----------------------------------------------------------------------------
+class RecordLoginEvent:
+    """Store an authentication event for an EXISTING account only.
+
+    Attempts on unknown e-mails are not stored: the history must not become a list of probed
+    addresses, and storing them would not help the account owner.
+    """
+
+    def __init__(self, users: UserRepository, history: LoginHistoryRepository) -> None:
+        self._users, self._history = users, history
+
+    def for_email(self, email: str, outcome: LoginOutcome, ip: str, user_agent: str, now: datetime) -> bool:
+        user = self._users.get_by_email(email.strip().lower())
+        if user is None:
+            return False
+        self.for_user(user.id, outcome, ip, user_agent, now)
+        return True
+
+    def for_user(self, user_id: int, outcome: LoginOutcome, ip: str, user_agent: str, now: datetime) -> None:
+        self._history.record(LoginEvent(user_id, outcome, now, ip[:64], user_agent[:300]))
+
+
+@dataclass(frozen=True, slots=True)
+class LoginHistory:
+    events: list[LoginEvent]
+    failures_last_30_days: int
+    previous_success: datetime | None  # the login before the current session, to spot a stranger
+
+
+class GetLoginHistory:
+    def __init__(self, history: LoginHistoryRepository) -> None:
+        self._history = history
+
+    def execute(self, user_id: int, now: datetime, limit: int = 20) -> LoginHistory:
+        window = self._history.recent(user_id, 500)  # retention keeps this small (90 days)
+        since = now - timedelta(days=30)
+        successes = [e for e in window if e.outcome is LoginOutcome.SUCCESS]
+        return LoginHistory(
+            events=window[:limit],
+            failures_last_30_days=sum(1 for e in window if e.occurred_at >= since
+                                      and e.outcome in (LoginOutcome.FAILURE, LoginOutcome.THROTTLED)),
+            previous_success=successes[1].occurred_at if len(successes) > 1 else None,
+        )

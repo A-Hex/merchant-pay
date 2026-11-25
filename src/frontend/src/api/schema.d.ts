@@ -38,6 +38,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Login History
+         * @description The signed-in user's own authentication events. Never another user's, whatever the merchant.
+         */
+        get: operations["login_history_api_v1_auth_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/merchant/me": {
         parameters: {
             query?: never;
@@ -1189,6 +1209,30 @@ export interface components {
             /** Share */
             share: string;
         };
+        /** LoginEventOut */
+        LoginEventOut: {
+            /**
+             * Occurred At
+             * Format: date-time
+             */
+            occurred_at: string;
+            outcome: components["schemas"]["LoginOutcome"];
+            /** Ip */
+            ip: string;
+            /** Device */
+            device: string;
+        };
+        /** LoginHistoryOut */
+        LoginHistoryOut: {
+            /** Events */
+            events: components["schemas"]["LoginEventOut"][];
+            /** Failures Last 30 Days */
+            failures_last_30_days: number;
+            /** Previous Success */
+            previous_success: string | null;
+            /** Retention Days */
+            retention_days: number;
+        };
         /** LoginIn */
         LoginIn: {
             /** Email */
@@ -1196,6 +1240,11 @@ export interface components {
             /** Password */
             password: string;
         };
+        /**
+         * LoginOutcome
+         * @enum {string}
+         */
+        LoginOutcome: "success" | "failure" | "throttled" | "logout";
         /** LoyaltyAccrualOut */
         LoyaltyAccrualOut: {
             /** Program Version */
@@ -1806,6 +1855,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+        };
+    };
+    login_history_api_v1_auth_history_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoginHistoryOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
             };
         };
     };

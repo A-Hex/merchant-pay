@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from app.contexts.identity.domain.model import Merchant, MerchantAccess, User
+from app.contexts.identity.domain.model import LoginEvent, Merchant, MerchantAccess, User
 
 
 class UserRepository(Protocol):
@@ -33,3 +33,11 @@ class TokenService(Protocol):
     def issue(self, user_id: int) -> str: ...
 
     def decode(self, token: str) -> int | None: ...
+
+
+class LoginHistoryRepository(Protocol):
+    def record(self, event: LoginEvent) -> None:
+        """Persist immediately, independently of the request's unit of work (a failed login rolls back)."""
+        ...
+
+    def recent(self, user_id: int, limit: int) -> list[LoginEvent]: ...

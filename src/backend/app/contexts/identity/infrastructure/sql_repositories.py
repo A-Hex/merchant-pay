@@ -1,8 +1,20 @@
-from sqlalchemy import select
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
+
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from app.contexts.identity.domain.model import Merchant, MerchantAccess, Role, User, UserStatus
-from app.db.models import AuditEventRow, MerchantRow, UserMerchantAccessRow, UserRow
+from app.contexts.identity.domain.model import (
+    LOGIN_HISTORY_RETENTION_DAYS,
+    LoginEvent,
+    LoginOutcome,
+    Merchant,
+    MerchantAccess,
+    Role,
+    User,
+    UserStatus,
+)
+from app.db.models import AuditEventRow, LoginEventRow, MerchantRow, UserMerchantAccessRow, UserRow
 from app.shared.domain.errors import NotFound
 from app.shared.domain.money import Money
 
@@ -66,3 +78,31 @@ class SqlAuditLog:
 
     def record(self, actor_id: int, action: str, entity_ref: str) -> None:
         self._s.add(AuditEventRow(actor_id=actor_id, action=action, entity_ref=entity_ref[:255]))
+
+
+class SqlLoginHistory:
+    """Writes through its OWN short transaction, so a failed login (whose request rolls back) is
+    still recorded. Prunes the user's events older than the retention window on each write."""
+
+    def __init__(self, open_session: Callable[[], Session]) -> None:
+        self._open = open_session
+
+    def record(self, event: LoginEvent) -> None:
+        cutoff = event.occurred_at - timedelta(days=LOGIN_HISTORY_RETENTION_DAYS)
+        with self._open() as s, s.begin():
+            s.add(LoginEventRow(user_id=event.user_id, outcome=event.outcome.value,
+                                occurred_at=event.occurred_at, ip=event.ip, user_agent=event.user_agent))
+            s.execute(delete(LoginEventRow).where(LoginEventRow.user_id == event.user_id,
+                                                  LoginEventRow.occurred_at < cutoff))
+
+    def recent(self, user_id: int, limit: int) -> list[LoginEvent]:
+        with self._open() as s:
+            rows = s.scalars(select(LoginEventRow).where(LoginEventRow.user_id == user_id)
+                             .order_by(LoginEventRow.occurred_at.desc(), LoginEventRow.id.desc())
+                             .limit(limit)).all()
+            return [LoginEvent(r.user_id, LoginOutcome(r.outcome), _aware(r.occurred_at), r.ip, r.user_agent)
+                    for r in rows]
+
+
+def _aware(dt: datetime) -> datetime:
+    return dt if dt.tzinfo else dt.replace(tzinfo=UTC)  # SQLite drops the offset; Postgres keeps it

@@ -184,3 +184,17 @@ class LoyaltyScenarioRunRow(Base):
     inputs: Mapped[dict] = mapped_column(JSON)
     results: Mapped[dict] = mapped_column(JSON)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+
+class LoginEventRow(Base):
+    """Per-user authentication history (success, failure, throttled, logout). Pruned after 90 days."""
+
+    __tablename__ = "login_events"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    outcome: Mapped[str] = mapped_column(String(16))
+    occurred_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    ip: Mapped[str] = mapped_column(String(64))
+    user_agent: Mapped[str] = mapped_column(String(300))
+
+    __table_args__ = (Index("ix_login_events_user_time", "user_id", "occurred_at"),)

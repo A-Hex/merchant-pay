@@ -37,7 +37,9 @@ from app.contexts.customers.application.use_cases import (
 from app.contexts.customers.infrastructure.sql_decision_repository import SqlDecisionRepository
 from app.contexts.identity.application.use_cases import (
     Authenticate,
+    GetLoginHistory,
     GetMe,
+    RecordLoginEvent,
     ResolveScope,
     UpdateMerchantProfile,
 )
@@ -46,6 +48,7 @@ from app.contexts.identity.infrastructure.security import Argon2PasswordHasher, 
 from app.contexts.identity.infrastructure.sql_repositories import (
     SqlAccessRepository,
     SqlAuditLog,
+    SqlLoginHistory,
     SqlMerchantRepository,
     SqlUserRepository,
 )
@@ -117,6 +120,21 @@ def get_authenticate(db: Session = Depends(get_db), hasher=Depends(get_password_
 def get_login_throttle(request: Request) -> LoginThrottle:
     """One throttle per app instance (created in main.create_app), so tests stay isolated."""
     return request.app.state.login_throttle
+
+
+def get_login_history(db: Session = Depends(get_db)) -> SqlLoginHistory:
+    """Own short-lived sessions on the request's engine: events survive a failed request's rollback."""
+    bind = db.get_bind()
+    return SqlLoginHistory(lambda: Session(bind=bind))
+
+
+def get_record_login_event(db: Session = Depends(get_db),
+                           history: SqlLoginHistory = Depends(get_login_history)) -> RecordLoginEvent:
+    return RecordLoginEvent(SqlUserRepository(db), history)
+
+
+def get_login_history_uc(history: SqlLoginHistory = Depends(get_login_history)) -> GetLoginHistory:
+    return GetLoginHistory(history)
 
 
 def get_current_user_id(request: Request, tokens=Depends(get_token_service)) -> int:

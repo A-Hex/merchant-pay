@@ -553,5 +553,20 @@
       "error": "Le rapport n'a pas pu être généré. Réessayez."
     },
     "privacy": "Aucun numéro de téléphone n'est demandé ni enregistré, et aucun chiffre n'est placé dans le lien WhatsApp. Chaque export est journalisé (sans son contenu)."
+  },
+  "security": {
+    "title": "Sécurité du compte : historique de connexion",
+    "failures": "{{n}} tentative(s) échouée(s) ou bloquée(s) sur votre compte ces 30 derniers jours. Si ce n'était pas vous, changez votre mot de passe.",
+    "previous": "Connexion précédente réussie : {{date}}. Si ce n'était pas vous, signalez-le.",
+    "noPrevious": "Aucune connexion précédente enregistrée.",
+    "empty": "Aucun événement de connexion enregistré.",
+    "unknownDevice": "Appareil inconnu",
+    "outcome": {
+      "success": "Connexion réussie",
+      "failure": "Mot de passe incorrect",
+      "throttled": "Bloquée (trop de tentatives)",
+      "logout": "Déconnexion"
+    },
+    "note": "Seuls les événements de votre propre compte sont affichés ; conservés {{days}} jours. Les tentatives sur des adresses inexistantes ne sont pas enregistrées."
   }
 }

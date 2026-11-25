@@ -56,3 +56,4 @@ export type ScenarioLab = S["LabOut"];
 export type ScenarioLabIn = S["LabIn"];
 export type LabScenario = S["LabScenarioOut"];
 export type CollectionsReport = S["CollectionsReportOut"];
+export type LoginHistory = S["LoginHistoryOut"];
