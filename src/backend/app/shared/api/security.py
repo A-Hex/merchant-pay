@@ -4,8 +4,13 @@ The session is an httpOnly SameSite=Lax cookie, which already stops classic cros
 The Origin check is defence in depth: a browser always sends Origin on cross-origin POST/PUT/PATCH/
 DELETE, so a request whose Origin is neither this API's own host nor an allowlisted frontend is
 refused (403). Requests without Origin (curl, server-to-server, the test client) are unaffected.
+
+"Same site" compares Origin with Host and with X-Forwarded-Host. The dev proxy rewrites Host to the API
+address and forwards the browser's host as X-Forwarded-Host. A cross-site page cannot set that header:
+it is not CORS-safelisted, so the browser preflights the request and this API's CORS allowlist blocks it.
 """
 
+import logging
 from collections.abc import Iterable
 from urllib.parse import urlsplit
 
@@ -13,6 +18,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+log = logging.getLogger("merchant_pay.security")
 UNSAFE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
 HEADERS = {
     "X-Content-Type-Options": "nosniff",
@@ -40,14 +46,19 @@ class SecurityMiddleware(BaseHTTPMiddleware):
         if origin == "null":
             return False
         origin = _origin_of(origin)
-        same_host = urlsplit(origin).netloc == request.headers.get("host", "").lower()
-        return same_host or origin in self._allowed
+        hosts = {request.headers.get("host", "").lower()}
+        forwarded = request.headers.get("x-forwarded-host")
+        if forwarded:
+            hosts.add(forwarded.split(",")[0].strip().lower())
+        return urlsplit(origin).netloc in hosts or origin in self._allowed
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         origin = request.headers.get("origin")
         refused = request.method in UNSAFE_METHODS and origin is not None \
             and not self._origin_allowed(request, origin)
         if refused:
+            log.warning("cross-origin %s refused: origin=%s host=%s", request.method, origin,
+                        request.headers.get("host"))
             response: Response = JSONResponse(
                 {"detail": "Cross-origin request refused", "code": "OriginRefused"}, status_code=403)
         else:

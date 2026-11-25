@@ -5,6 +5,7 @@
     "alerts": "Alertes", "simulator": "Simulateur", "insights": "Analyses", "profile": "Profil", "customers": "Clients", "loyalty": "Fidélité"
   },
   "auth": {
+    "unreachable": "Serveur injoignable : vérifiez que l'API est démarrée (make up).", "forbiddenOrigin": "Requête refusée par la protection inter-sites : ouvrez l'application depuis son adresse habituelle.", "serverError": "Le serveur a rencontré une erreur. Réessayez.",
     "welcome": "Bon retour", "context": "CEO-Pay · solution Merchant Pay de l'équipe UMCBOT · défi FINOVIA × ENSM × SATIM · données synthétiques", "showPassword": "Afficher le mot de passe", "hidePassword": "Masquer le mot de passe",
     "title": "Connexion à votre espace marchand", "email": "Adresse e-mail", "password": "Mot de passe",
     "submit": "Se connecter", "error": "E-mail ou mot de passe incorrect",

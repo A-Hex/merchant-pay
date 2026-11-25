@@ -79,7 +79,11 @@ export function LoginPage() {
             {login.isError && (
               <motion.p role="alert" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                 className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                {login.error instanceof ApiError && login.error.status === 429 ? t("auth.throttled") : t("auth.error")}
+                {!(login.error instanceof ApiError) ? t("auth.unreachable")
+                  : login.error.status === 401 ? t("auth.error")
+                  : login.error.status === 429 ? t("auth.throttled")
+                  : login.error.status === 403 ? t("auth.forbiddenOrigin")
+                  : t("auth.serverError")}
               </motion.p>
             )}
             <motion.div variants={itemVariants}>

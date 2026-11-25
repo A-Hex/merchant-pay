@@ -49,3 +49,12 @@ def test_state_changing_requests_from_foreign_origins_are_refused(client):
     assert client.post(LOGIN, json=body).status_code == 204  # non-browser client: no Origin header
     # reads are never blocked by the guard (CORS still governs what a browser may read)
     assert client.get("/api/v1/merchant/me", headers={"Origin": "https://evil.example"}).status_code == 200
+
+
+def test_dev_proxy_forwarded_host_counts_as_same_site(client):
+    """The Vite proxy rewrites Host to the API; X-Forwarded-Host carries the address the user opened."""
+    body = {"email": "one@test.dz", "password": "pw-one"}
+    via_proxy = {"Origin": "http://127.0.0.1:5173", "X-Forwarded-Host": "127.0.0.1:5173"}
+    assert client.post(LOGIN, json=body, headers=via_proxy).status_code == 204
+    spoof = {"Origin": "https://evil.example", "X-Forwarded-Host": "127.0.0.1:5173"}
+    assert client.post(LOGIN, json=body, headers=spoof).status_code == 403  # header must match the Origin
