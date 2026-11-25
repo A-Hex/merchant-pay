@@ -12,6 +12,7 @@ from app.contexts.ledger.api.router import router as ledger_router
 from app.contexts.loyalty.api.router import router as loyalty_router
 from app.contexts.simulation.api.router import router as simulation_router
 from app.shared.api.errors import register_error_handlers
+from app.shared.api.security import SecurityMiddleware
 
 
 def create_app() -> FastAPI:
@@ -21,6 +22,7 @@ def create_app() -> FastAPI:
     app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
                        allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
     register_error_handlers(app)
+    app.add_middleware(SecurityMiddleware, allowed_origins=settings.cors_origins)
     app.state.login_throttle = LoginThrottle()
 
     api = APIRouter(prefix="/api/v1")

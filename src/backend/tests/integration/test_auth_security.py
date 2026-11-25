@@ -28,3 +28,24 @@ def test_successful_login_resets_counter_and_is_audited(client, seeded):
     with Session(seeded) as s:
         events = s.scalars(select(AuditEventRow).where(AuditEventRow.action == "auth.login")).all()
         assert len(events) == 1 and events[0].actor_id is not None
+
+
+def test_security_headers_on_api_responses(client):
+    r = client.get("/api/v1/merchant/me")
+    assert r.headers["x-content-type-options"] == "nosniff"
+    assert r.headers["x-frame-options"] == "DENY"
+    assert r.headers["content-security-policy"] == "default-src 'none'; frame-ancestors 'none'"
+    assert "content-security-policy" not in client.get("/api/docs").headers  # Swagger UI needs its assets
+
+
+def test_state_changing_requests_from_foreign_origins_are_refused(client):
+    body = {"email": "one@test.dz", "password": "pw-one"}
+    evil = client.post(LOGIN, json=body, headers={"Origin": "https://evil.example"})
+    assert evil.status_code == 403 and evil.json()["code"] == "OriginRefused"
+    assert client.post(LOGIN, json=body, headers={"Origin": "null"}).status_code == 403
+    assert client.post(LOGIN, json=body, headers={"Origin": "http://localhost:5173"}).status_code == 204
+    same_host = {"Origin": "http://testserver"}
+    assert client.post(LOGIN, json=body, headers=same_host).status_code == 204
+    assert client.post(LOGIN, json=body).status_code == 204  # non-browser client: no Origin header
+    # reads are never blocked by the guard (CORS still governs what a browser may read)
+    assert client.get("/api/v1/merchant/me", headers={"Origin": "https://evil.example"}).status_code == 200
