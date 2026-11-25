@@ -17,6 +17,7 @@ from sqlalchemy import (
     Numeric,
     String,
     Text,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -135,3 +136,51 @@ class CustomerActionRow(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
 
     __table_args__ = (Index("ix_customer_actions_lookup", "merchant_id", "customer_token", "created_at"),)
+
+
+class LoyaltyProgramRow(Base):
+    """Versioned, hypothetical programme rules. A change creates a new version (never an update)."""
+
+    __tablename__ = "loyalty_programs"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.merchant_id"))
+    version: Mapped[int] = mapped_column(Integer)
+    rules: Mapped[dict] = mapped_column(JSON)
+    effective_from: Mapped[date] = mapped_column(Date)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (UniqueConstraint("merchant_id", "version", name="uq_loyalty_program_version"),)
+
+
+class LoyaltyLedgerEntryRow(Base):
+    """Immutable points ledger. The unique idempotency key makes accrual safe to replay."""
+
+    __tablename__ = "loyalty_ledger_entries"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.merchant_id"))
+    program_version: Mapped[int] = mapped_column(Integer)
+    customer_token: Mapped[str] = mapped_column(String(64))
+    kind: Mapped[str] = mapped_column(String(16))
+    points: Mapped[int] = mapped_column(Integer)
+    occurred_on: Mapped[date] = mapped_column(Date)
+    source_transaction_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    idempotency_key: Mapped[str] = mapped_column(String(160))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)
+
+    __table_args__ = (
+        UniqueConstraint("merchant_id", "idempotency_key", name="uq_loyalty_ledger_idempotency"),
+        Index("ix_loyalty_ledger_merchant_version", "merchant_id", "program_version"),
+    )
+
+
+class LoyaltyScenarioRunRow(Base):
+    """Audit of each loyalty simulation: the exact inputs and results the merchant saw."""
+
+    __tablename__ = "loyalty_scenario_runs"
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    merchant_id: Mapped[str] = mapped_column(ForeignKey("merchants.merchant_id"), index=True)
+    created_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    inputs: Mapped[dict] = mapped_column(JSON)
+    results: Mapped[dict] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now)

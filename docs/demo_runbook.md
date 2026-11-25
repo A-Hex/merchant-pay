@@ -22,6 +22,7 @@ make dev-front
 | 4c (optional, 45 s) | Clients → Reconquête | 22 at-risk customers hold 18.1 % of historical tokenised value (1,036,453.66 DZD). The top ones are high-value regulars silent 22–25 days against a 6–8 day rhythm (evidence shown per customer). Log in as `demo2`: "no customer identifier", so nothing is invented. Say it: the tokens are synthetic and planted, and the rule recovers 14/14 planted drifters as at-risk or watch without seeing the labels. |
 | 5 | Alerts: open `COLLECTION_DROP`, acknowledge it | A persisted alert with metric, windows, threshold, values and a link to the evidence. |
 | 6 | Simulator: +15% volume | Projected count and collection, the delta, and the assumptions panel. |
+| 6b (optional, Q&A) | Fidélité: margin 25 %, fixed cost 20,000 DZD, defaults otherwise → Calculate | 1 % back on 2.68 M DZD of identified sales. Base scenario (+3 %, 50 % redemption): **−13,494.99 DZD**, because 97 % of the reward cost rewards sales the merchant already had. Break-even needs **+5.1 %** sales (≈ 35 extra transactions). Save → Run pilot twice: 26,421 points, the second run adds 0 (idempotent). |
 
 ## Likely questions
 See blueprint §16: why no deep learning, refund treatment, and whether the data is real (it is synthetic).

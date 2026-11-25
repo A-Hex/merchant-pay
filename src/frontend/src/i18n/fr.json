@@ -2,7 +2,7 @@
   "app": { "name": "Merchant Pay", "tagline": "Pilotage intelligent de vos encaissements" },
   "nav": {
     "dashboard": "Tableau de bord", "transactions": "Transactions", "collections": "Encaissements",
-    "alerts": "Alertes", "simulator": "Simulateur", "insights": "Analyses", "profile": "Profil", "customers": "Clients"
+    "alerts": "Alertes", "simulator": "Simulateur", "insights": "Analyses", "profile": "Profil", "customers": "Clients", "loyalty": "Fidélité"
   },
   "auth": {
     "title": "Connexion à votre espace marchand", "email": "Adresse e-mail", "password": "Mot de passe",
@@ -357,5 +357,96 @@
     "byStatus": "Toutes ses transactions par statut",
     "refundNote": "Les remboursements sont affichés à part et ne réduisent pas la valeur historique.",
     "recent": "Transactions récentes de ce client"
+  },
+  "loyalty": {
+    "title": "Studio fidélité",
+    "hypothetical": "Programme hypothétique",
+    "intro": "Concevez un programme de points et voyez ce qu'il coûterait, et quelle hausse des ventes serait nécessaire pour le payer. Rien n'est envoyé aux clients, aucun point réel n'est émis. Les calculs utilisent uniquement les transactions acceptées des clients identifiés (identifiants pseudonymes synthétiques).",
+    "optional": "facultatif",
+    "rules": {
+      "title": "Règles du programme",
+      "points": "Points par tranche de 100 DZD",
+      "pointValue": "Valeur d'un point (DZD)",
+      "minSpend": "Achat minimum éligible (DZD)",
+      "cap": "Plafond de points par client",
+      "expiry": "Expiration des points (jours)",
+      "budget": "Budget du programme (DZD)"
+    },
+    "assumptions": {
+      "title": "Hypothèses du scénario (les vôtres)",
+      "margin": "Marge brute (%)",
+      "marginHint": "requise pour la contribution",
+      "fixedCost": "Coût fixe de campagne (DZD)",
+      "window": "Période de référence",
+      "uplift": "Hausse des ventes",
+      "redemption": "Taux d'utilisation des points",
+      "examples": "Les valeurs pré-remplies sont des exemples, pas des estimations : remplacez-les par vos propres hypothèses."
+    },
+    "scenario": {
+      "low": "Bas",
+      "base": "Central",
+      "high": "Haut"
+    },
+    "simulate": "Calculer les scénarios",
+    "saveProgram": "Enregistrer comme programme",
+    "saved": "Programme v{{v}} enregistré (pilote à partir du {{from}}).",
+    "ownerOnly": "Seul le propriétaire peut enregistrer le programme ou lancer le pilote.",
+    "unavailable": "Simulation indisponible : aucune transaction de cette période ne porte d'identifiant client. Un programme de fidélité ne peut pas être évalué sans savoir qui revient.",
+    "errors": {
+      "pointValue": "Saisissez une valeur de point positive en DZD.",
+      "amount": "Montant invalide : chiffres et 2 décimales au plus.",
+      "number": "Valeur numérique invalide.",
+      "server": "Le calcul a été refusé : vérifiez les valeurs (marge entre 0 et 100 %, taux entre 0 et 100 %)."
+    },
+    "results": {
+      "title": "Coûts et rentabilité par scénario",
+      "baseline": "Référence du {{from}} au {{to}} : {{sales}} d'encaissements acceptés de clients identifiés ({{tx}} transactions, {{customers}} clients). Le programme rend {{rate}} de l'achat éligible en valeur faciale.",
+      "assumed": "+{{u}} ventes · {{r}} utilisés",
+      "incrementalSales": "Ventes supplémentaires",
+      "incrementalNote": "hypothèse saisie, pas une prévision",
+      "points": "Points émis",
+      "liability": "Engagement en points",
+      "liabilityNote": "valeur faciale de tous les points émis",
+      "rewardCost": "Coût attendu des récompenses",
+      "existing": "dont récompenses sur des ventes déjà acquises",
+      "existingNote": "payées sur ce que les clients auraient acheté de toute façon",
+      "fixedCost": "Coût fixe de campagne",
+      "totalCost": "Coût total",
+      "gross": "Contribution brute des ventes supplémentaires",
+      "net": "Contribution nette du scénario",
+      "netNote": "marge × ventes supplémentaires − coût total ; ce n'est pas un profit comptable",
+      "breakEven": "Hausse des ventes nécessaire pour couvrir les coûts",
+      "breakEvenNote": "au taux d'utilisation de ce scénario",
+      "beDetail": "{{sales}} · ≈ {{tx}} transactions",
+      "be_margin_required": "Saisissez une marge",
+      "be_not_reachable": "Inatteignable : chaque vente en plus coûte plus en récompenses qu'elle ne rapporte en marge",
+      "overBudget": "Dépassement du budget"
+    },
+    "method": {
+      "equations": "Points = arrondi inférieur(achat ÷ 100 DZD) × points par tranche, si achat ≥ minimum, plafonnés par client. Coût = taux d'utilisation × points × valeur du point + coût fixe. Contribution nette = marge × ventes supplémentaires − coût total.",
+      "notForecast": "Un scénario n'est pas une prévision : la hausse des ventes est votre hypothèse. Aucun effet causal n'est démontré sans expérimentation (par ex. un groupe témoin).",
+      "noMargin": "Sans marge saisie, seuls les coûts et l'engagement sont calculés : aucune contribution n'est affichée."
+    },
+    "ledger": {
+      "title": "Registre de points (pilote)",
+      "intro": "Rejoue les transactions passées sous le programme enregistré pour voir les points qui auraient été gagnés. Aucun point réel n'est émis.",
+      "accrue": "Lancer le pilote",
+      "noProgram": "Aucun programme enregistré : enregistrez des règles pour lancer un pilote.",
+      "accrued": "{{earn}} gains et {{expire}} expirations ajoutés ; {{existing}} écritures déjà présentes (relancer ne crée pas de doublon).",
+      "version": "Version · début",
+      "earned": "Points gagnés",
+      "expired": "Points expirés",
+      "liability": "Engagement restant",
+      "overBudget": "L'engagement dépasse le budget de {{over}}.",
+      "empty": "Aucune écriture pour l'instant : lancez le pilote.",
+      "rules": "Écritures immuables avec clé d'idempotence (une seule par transaction et version). Le solde est toujours une somme d'écritures. Les remboursements n'annulent pas de points : ils ne sont pas reliés à la vente d'origine dans ces données.",
+      "kind": {
+        "earn": "Gain",
+        "expire": "Expiration",
+        "redeem": "Utilisation",
+        "reverse": "Annulation",
+        "adjust": "Ajustement"
+      }
+    }
   }
 }

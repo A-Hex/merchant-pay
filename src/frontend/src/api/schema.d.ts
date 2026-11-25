@@ -345,6 +345,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/loyalty/program": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Program */
+        get: operations["get_program_api_v1_loyalty_program_get"];
+        /** Save Program */
+        put: operations["save_program_api_v1_loyalty_program_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loyalty/simulations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Simulations */
+        get: operations["list_simulations_api_v1_loyalty_simulations_get"];
+        put?: never;
+        /** Run Simulation */
+        post: operations["run_simulation_api_v1_loyalty_simulations_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loyalty/ledger/accrue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Accrue */
+        post: operations["accrue_api_v1_loyalty_ledger_accrue_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/loyalty/ledger": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ledger */
+        get: operations["ledger_api_v1_loyalty_ledger_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -454,30 +524,23 @@ export interface components {
          * @enum {string}
          */
         Availability: "available" | "no_customer_identifier" | "insufficient_history";
+        /** BaselineOut */
+        BaselineOut: {
+            period: components["schemas"]["PeriodOut"];
+            /** Total Count */
+            total_count: number;
+            /** Accepted Count */
+            accepted_count: number;
+            /** Acceptance Share */
+            acceptance_share: number;
+            average_ticket: components["schemas"]["MoneyOut"];
+            gross_collection: components["schemas"]["MoneyOut"];
+        };
         /**
          * BaselineSource
          * @enum {string}
          */
         BaselineSource: "personal" | "pooled";
-        /**
-         * BookOut
-         * @description Context every customer response carries: window, coverage, rules, availability.
-         */
-        BookOut: {
-            /**
-             * As Of
-             * Format: date
-             */
-            as_of: string;
-            window: components["schemas"]["PeriodOut"];
-            availability: components["schemas"]["Availability"];
-            /** Eligible Customers */
-            eligible_customers: number;
-            coverage: components["schemas"]["CoverageOut"];
-            pooled_baseline: components["schemas"]["app__contexts__customers__api__router__BaselineOut"] | null;
-            high_value_threshold: components["schemas"]["MoneyOut"] | null;
-            rules: components["schemas"]["RulesOut"];
-        };
         /** BucketOut */
         BucketOut: {
             /** Accepted Count */
@@ -532,8 +595,27 @@ export interface components {
             /** By Status */
             by_status: components["schemas"]["StatusSummaryOut"][];
         };
-        /** CoverageOut */
-        CoverageOut: {
+        /**
+         * CustomerBookOut
+         * @description Context every customer response carries: window, coverage, rules, availability.
+         */
+        CustomerBookOut: {
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+            window: components["schemas"]["PeriodOut"];
+            availability: components["schemas"]["Availability"];
+            /** Eligible Customers */
+            eligible_customers: number;
+            coverage: components["schemas"]["CustomerCoverageOut"];
+            pooled_baseline: components["schemas"]["ReturnBaselineOut"] | null;
+            high_value_threshold: components["schemas"]["MoneyOut"] | null;
+            rules: components["schemas"]["CustomerRulesOut"];
+        };
+        /** CustomerCoverageOut */
+        CustomerCoverageOut: {
             /** Accepted In Window */
             accepted_in_window: number;
             /** Tokenised In Window */
@@ -542,27 +624,199 @@ export interface components {
             accepted_value_in_window: components["schemas"]["MoneyOut"];
             tokenised_value_in_window: components["schemas"]["MoneyOut"];
         };
+        /** CustomerDecisionIn */
+        CustomerDecisionIn: {
+            decision: components["schemas"]["Decision"];
+            /** Snooze Until */
+            snooze_until?: string | null;
+        };
+        /** CustomerDecisionOut */
+        CustomerDecisionOut: {
+            decision: components["schemas"]["Decision"];
+            /** Snooze Until */
+            snooze_until: string | null;
+            /**
+             * Decided At
+             * Format: date-time
+             */
+            decided_at: string;
+        };
         /** CustomerDetailOut */
         CustomerDetailOut: {
-            book: components["schemas"]["BookOut"];
-            customer: components["schemas"]["ProfileOut"];
+            book: components["schemas"]["CustomerBookOut"];
+            customer: components["schemas"]["CustomerProfileOut"];
             /** Statuses */
-            statuses: components["schemas"]["StatusCountOut"][];
+            statuses: components["schemas"]["CustomerStatusCountOut"][];
             /** Recent */
             recent: components["schemas"]["CustomerTxOut"][];
-            decision: components["schemas"]["DecisionOut"] | null;
+            decision: components["schemas"]["CustomerDecisionOut"] | null;
+        };
+        /** CustomerGroupOut */
+        CustomerGroupOut: {
+            /** Customers */
+            customers: number;
+            /** Transactions */
+            transactions: number;
+            accepted_value: components["schemas"]["MoneyOut"];
+        };
+        /** CustomerMonthOut */
+        CustomerMonthOut: {
+            /**
+             * Month Start
+             * Format: date
+             */
+            month_start: string;
+            /** Complete */
+            complete: boolean;
+            /** Active */
+            active: number;
+            /** New */
+            new: number;
+            /** Returning */
+            returning: number;
+        };
+        /** CustomerNewVsReturningOut */
+        CustomerNewVsReturningOut: {
+            period: components["schemas"]["PeriodOut"];
+            new: components["schemas"]["CustomerGroupOut"];
+            returning: components["schemas"]["CustomerGroupOut"];
+        };
+        /** CustomerOverviewOut */
+        CustomerOverviewOut: {
+            book: components["schemas"]["CustomerBookOut"];
+            repeat_rate: components["schemas"]["RateOut"];
+            /** Segments */
+            segments: components["schemas"]["CustomerSegmentRowOut"][];
+            /** Statuses */
+            statuses: components["schemas"]["CustomerStatusRowOut"][];
+            new_vs_returning: components["schemas"]["CustomerNewVsReturningOut"];
+            /** Monthly */
+            monthly: components["schemas"]["CustomerMonthOut"][];
         };
         /** CustomerPageOut */
         CustomerPageOut: {
-            book: components["schemas"]["BookOut"];
+            book: components["schemas"]["CustomerBookOut"];
             /** Items */
-            items: components["schemas"]["ProfileOut"][];
+            items: components["schemas"]["CustomerProfileOut"][];
             /** Total */
             total: number;
             /** Page */
             page: number;
             /** Size */
             size: number;
+        };
+        /** CustomerProfileOut */
+        CustomerProfileOut: {
+            /** Token */
+            token: string;
+            /** Alias */
+            alias: string;
+            /**
+             * First Purchase
+             * Format: date
+             */
+            first_purchase: string;
+            /**
+             * Last Purchase
+             * Format: date
+             */
+            last_purchase: string;
+            /** Lifetime Purchases */
+            lifetime_purchases: number;
+            /** Recency Days */
+            recency_days: number;
+            /** Frequency */
+            frequency: number;
+            monetary: components["schemas"]["MoneyOut"];
+            segment: components["schemas"]["Segment"];
+            /** High Value */
+            high_value: boolean | null;
+            evidence: components["schemas"]["ReturnEvidenceOut"];
+        };
+        /** CustomerReengageEntryOut */
+        CustomerReengageEntryOut: {
+            customer: components["schemas"]["CustomerProfileOut"];
+            suggestion: components["schemas"]["Suggestion"];
+            /** Recheck On */
+            recheck_on: string | null;
+            decision: components["schemas"]["CustomerDecisionOut"] | null;
+            /** Hidden */
+            hidden: boolean;
+        };
+        /** CustomerReengagementOut */
+        CustomerReengagementOut: {
+            book: components["schemas"]["CustomerBookOut"];
+            /** Rule Version */
+            rule_version: string;
+            /** Entries */
+            entries: components["schemas"]["CustomerReengageEntryOut"][];
+            /** Hidden Count */
+            hidden_count: number;
+        };
+        /** CustomerRulesOut */
+        CustomerRulesOut: {
+            /** Segments Version */
+            segments_version: string;
+            /** Window Days */
+            window_days: number;
+            /** New Days */
+            new_days: number;
+            /** Loyal Min Tx */
+            loyal_min_tx: number;
+            /** Loyal Min Span Days */
+            loyal_min_span_days: number;
+            /** High Value Quantile */
+            high_value_quantile: number;
+            /** Min Customers */
+            min_customers: number;
+            /** Winback Version */
+            winback_version: string;
+            /** Min Personal Intervals */
+            min_personal_intervals: number;
+            /** Min Pooled Intervals */
+            min_pooled_intervals: number;
+            /** Watch Ratio */
+            watch_ratio: number;
+            /** At Risk Ratio */
+            at_risk_ratio: number;
+            /** Lapsed Ratio */
+            lapsed_ratio: number;
+            /** K Watch */
+            k_watch: number;
+            /** K Risk */
+            k_risk: number;
+            /** Watch Min Days */
+            watch_min_days: number;
+            /** At Risk Min Days */
+            at_risk_min_days: number;
+            /** Lapsed Min Days */
+            lapsed_min_days: number;
+        };
+        /** CustomerSegmentRowOut */
+        CustomerSegmentRowOut: {
+            /** Customers */
+            customers: number;
+            /** Transactions */
+            transactions: number;
+            accepted_value: components["schemas"]["MoneyOut"];
+            segment: components["schemas"]["Segment"];
+            value_share: components["schemas"]["RateOut"];
+        };
+        /** CustomerStatusCountOut */
+        CustomerStatusCountOut: {
+            status: components["schemas"]["TransactionStatus"];
+            /** Count */
+            count: number;
+            amount: components["schemas"]["MoneyOut"];
+        };
+        /** CustomerStatusRowOut */
+        CustomerStatusRowOut: {
+            /** Customers */
+            customers: number;
+            /** Transactions */
+            transactions: number;
+            accepted_value: components["schemas"]["MoneyOut"];
+            status: components["schemas"]["ReturnStatus"];
         };
         /** CustomerTxOut */
         CustomerTxOut: {
@@ -610,23 +864,6 @@ export interface components {
          * @enum {string}
          */
         Decision: "dismiss" | "snooze" | "contacted" | "clear";
-        /** DecisionIn */
-        DecisionIn: {
-            decision: components["schemas"]["Decision"];
-            /** Snooze Until */
-            snooze_until?: string | null;
-        };
-        /** DecisionOut */
-        DecisionOut: {
-            decision: components["schemas"]["Decision"];
-            /** Snooze Until */
-            snooze_until: string | null;
-            /**
-             * Decided At
-             * Format: date-time
-             */
-            decided_at: string;
-        };
         /** DeclineEstimateOut */
         DeclineEstimateOut: {
             observed: components["schemas"]["RateOut"];
@@ -662,31 +899,17 @@ export interface components {
             probability_higher: number;
             verdict: components["schemas"]["Verdict"];
         };
+        /**
+         * EntryKind
+         * @enum {string}
+         */
+        EntryKind: "earn" | "expire" | "redeem" | "reverse" | "adjust";
         /** EvaluationOut */
         EvaluationOut: {
             /** Created */
             created: components["schemas"]["AlertOut"][];
             current_period: components["schemas"]["PeriodOut"];
             previous_period: components["schemas"]["PeriodOut"];
-        };
-        /** EvidenceOut */
-        EvidenceOut: {
-            status: components["schemas"]["ReturnStatus"];
-            /**
-             * Last Purchase
-             * Format: date
-             */
-            last_purchase: string;
-            /** Gap Days */
-            gap_days: number;
-            /** Purchase Days */
-            purchase_days: number;
-            baseline: components["schemas"]["app__contexts__customers__api__router__BaselineOut"] | null;
-            thresholds: components["schemas"]["ThresholdsOut"] | null;
-            /** Ratio */
-            ratio: number | null;
-            /** Rule Version */
-            rule_version: string;
         };
         /**
          * FactKind
@@ -704,14 +927,6 @@ export interface components {
          * @enum {string}
          */
         Granularity: "day" | "week" | "month";
-        /** GroupOut */
-        GroupOut: {
-            /** Customers */
-            customers: number;
-            /** Transactions */
-            transactions: number;
-            accepted_value: components["schemas"]["MoneyOut"];
-        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -743,6 +958,217 @@ export interface components {
             email: string;
             /** Password */
             password: string;
+        };
+        /** LoyaltyAccrualOut */
+        LoyaltyAccrualOut: {
+            /** Program Version */
+            program_version: number;
+            /** Created Earn */
+            created_earn: number;
+            /** Created Expire */
+            created_expire: number;
+            /** Already Recorded */
+            already_recorded: number;
+        };
+        /** LoyaltyBaselineOut */
+        LoyaltyBaselineOut: {
+            window: components["schemas"]["PeriodOut"];
+            tokenised_sales: components["schemas"]["MoneyOut"];
+            /** Tokenised Transactions */
+            tokenised_transactions: number;
+            /** Customers */
+            customers: number;
+            average_ticket: components["schemas"]["MoneyOut"] | null;
+        };
+        /** LoyaltyBreakEvenOut */
+        LoyaltyBreakEvenOut: {
+            /** Name */
+            name: string;
+            /** Uplift */
+            uplift: number | null;
+            incremental_sales: components["schemas"]["MoneyOut"] | null;
+            /** Incremental Transactions */
+            incremental_transactions: number | null;
+            /** Reason */
+            reason: string | null;
+        };
+        /** LoyaltyEntryOut */
+        LoyaltyEntryOut: {
+            /** Customer */
+            customer: string;
+            kind: components["schemas"]["EntryKind"];
+            /** Points */
+            points: number;
+            /**
+             * Occurred On
+             * Format: date
+             */
+            occurred_on: string;
+            /** Source Transaction Id */
+            source_transaction_id: string | null;
+        };
+        /** LoyaltyLedgerOut */
+        LoyaltyLedgerOut: {
+            program: components["schemas"]["LoyaltyProgramOut"] | null;
+            summary: components["schemas"]["LoyaltyLedgerSummaryOut"] | null;
+            /** Entries */
+            entries: components["schemas"]["LoyaltyEntryOut"][];
+            /** Total */
+            total: number;
+            /** Page */
+            page: number;
+            /** Size */
+            size: number;
+        };
+        /** LoyaltyLedgerSummaryOut */
+        LoyaltyLedgerSummaryOut: {
+            /** Earned */
+            earned: number;
+            /** Expired */
+            expired: number;
+            /** Outstanding */
+            outstanding: number;
+            /** Customers With Balance */
+            customers_with_balance: number;
+            liability: components["schemas"]["MoneyOut"];
+            budget: components["schemas"]["MoneyOut"] | null;
+            liability_over_budget: components["schemas"]["MoneyOut"] | null;
+        };
+        /** LoyaltyProgramIn */
+        LoyaltyProgramIn: {
+            rules: components["schemas"]["LoyaltyRulesIn"];
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+        };
+        /** LoyaltyProgramOut */
+        LoyaltyProgramOut: {
+            /** Version */
+            version: number;
+            /**
+             * Effective From
+             * Format: date
+             */
+            effective_from: string;
+            /** Created At */
+            created_at: string | null;
+            rules: components["schemas"]["LoyaltyRulesOut"];
+        };
+        /** LoyaltyProgramStateOut */
+        LoyaltyProgramStateOut: {
+            program: components["schemas"]["LoyaltyProgramOut"] | null;
+        };
+        /** LoyaltyRulesIn */
+        LoyaltyRulesIn: {
+            /** Points Per 100 Dzd */
+            points_per_100_dzd: number;
+            /** Point Value Centimes */
+            point_value_centimes: number;
+            /**
+             * Min Eligible Spend Centimes
+             * @default 0
+             */
+            min_eligible_spend_centimes: number;
+            /** Cap Points Per Customer */
+            cap_points_per_customer?: number | null;
+            /** Expiry Days */
+            expiry_days?: number | null;
+            /** Campaign Budget Centimes */
+            campaign_budget_centimes?: number | null;
+        };
+        /** LoyaltyRulesOut */
+        LoyaltyRulesOut: {
+            /** Points Per 100 Dzd */
+            points_per_100_dzd: number;
+            point_value: components["schemas"]["MoneyOut"];
+            min_eligible_spend: components["schemas"]["MoneyOut"];
+            /** Cap Points Per Customer */
+            cap_points_per_customer: number | null;
+            /** Expiry Days */
+            expiry_days: number | null;
+            campaign_budget: components["schemas"]["MoneyOut"] | null;
+            /** Reward Rate */
+            reward_rate: number;
+        };
+        /** LoyaltyScenarioIn */
+        LoyaltyScenarioIn: {
+            /** Name */
+            name: string;
+            /** Uplift */
+            uplift: number | string;
+            /** Redemption Rate */
+            redemption_rate: number | string;
+        };
+        /** LoyaltyScenarioResultOut */
+        LoyaltyScenarioResultOut: {
+            /** Name */
+            name: string;
+            /** Uplift */
+            uplift: number;
+            /** Redemption Rate */
+            redemption_rate: number;
+            incremental_sales: components["schemas"]["MoneyOut"];
+            /** Points Issued */
+            points_issued: number;
+            reward_liability: components["schemas"]["MoneyOut"];
+            reward_cost: components["schemas"]["MoneyOut"];
+            reward_cost_on_existing_sales: components["schemas"]["MoneyOut"];
+            campaign_cost: components["schemas"]["MoneyOut"];
+            total_cost: components["schemas"]["MoneyOut"];
+            gross_contribution: components["schemas"]["MoneyOut"] | null;
+            net_contribution: components["schemas"]["MoneyOut"] | null;
+            budget_exceeded_by: components["schemas"]["MoneyOut"] | null;
+        };
+        /** LoyaltySimulationIn */
+        LoyaltySimulationIn: {
+            rules: components["schemas"]["LoyaltyRulesIn"];
+            /** Scenarios */
+            scenarios: components["schemas"]["LoyaltyScenarioIn"][];
+            /** Gross Margin */
+            gross_margin?: number | string | null;
+            /**
+             * Campaign Cost Centimes
+             * @default 0
+             */
+            campaign_cost_centimes: number;
+            /**
+             * Window Days
+             * @default 90
+             */
+            window_days: number;
+        };
+        /** LoyaltySimulationOut */
+        LoyaltySimulationOut: {
+            /** Run Id */
+            run_id: number;
+            baseline: components["schemas"]["LoyaltyBaselineOut"];
+            rules: components["schemas"]["LoyaltyRulesOut"];
+            /** Gross Margin */
+            gross_margin: number | null;
+            /** Results */
+            results: components["schemas"]["LoyaltyScenarioResultOut"][];
+            /** Break Even */
+            break_even: components["schemas"]["LoyaltyBreakEvenOut"][];
+        };
+        /** LoyaltySimulationRunOut */
+        LoyaltySimulationRunOut: {
+            /** Id */
+            id: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Inputs */
+            inputs: {
+                [key: string]: unknown;
+            };
+            /** Results */
+            results: {
+                [key: string]: unknown;
+            };
         };
         /** MeOut */
         MeOut: {
@@ -812,40 +1238,6 @@ export interface components {
              */
             currency: string;
         };
-        /** MonthOut */
-        MonthOut: {
-            /**
-             * Month Start
-             * Format: date
-             */
-            month_start: string;
-            /** Complete */
-            complete: boolean;
-            /** Active */
-            active: number;
-            /** New */
-            new: number;
-            /** Returning */
-            returning: number;
-        };
-        /** NewVsReturningOut */
-        NewVsReturningOut: {
-            period: components["schemas"]["PeriodOut"];
-            new: components["schemas"]["GroupOut"];
-            returning: components["schemas"]["GroupOut"];
-        };
-        /** OverviewOut */
-        OverviewOut: {
-            book: components["schemas"]["BookOut"];
-            repeat_rate: components["schemas"]["RateOut"];
-            /** Segments */
-            segments: components["schemas"]["SegmentRowOut"][];
-            /** Statuses */
-            statuses: components["schemas"]["StatusRowOut"][];
-            new_vs_returning: components["schemas"]["NewVsReturningOut"];
-            /** Monthly */
-            monthly: components["schemas"]["MonthOut"][];
-        };
         /** PeriodOut */
         PeriodOut: {
             /**
@@ -858,34 +1250,6 @@ export interface components {
              * Format: date
              */
             date_to: string;
-        };
-        /** ProfileOut */
-        ProfileOut: {
-            /** Token */
-            token: string;
-            /** Alias */
-            alias: string;
-            /**
-             * First Purchase
-             * Format: date
-             */
-            first_purchase: string;
-            /**
-             * Last Purchase
-             * Format: date
-             */
-            last_purchase: string;
-            /** Lifetime Purchases */
-            lifetime_purchases: number;
-            /** Recency Days */
-            recency_days: number;
-            /** Frequency */
-            frequency: number;
-            monetary: components["schemas"]["MoneyOut"];
-            segment: components["schemas"]["Segment"];
-            /** High Value */
-            high_value: boolean | null;
-            evidence: components["schemas"]["EvidenceOut"];
         };
         /** ProjectionOut */
         ProjectionOut: {
@@ -938,85 +1302,54 @@ export interface components {
             /** Value */
             value: number | null;
         };
-        /** ReengageEntryOut */
-        ReengageEntryOut: {
-            customer: components["schemas"]["ProfileOut"];
-            suggestion: components["schemas"]["Suggestion"];
-            /** Recheck On */
-            recheck_on: string | null;
-            decision: components["schemas"]["DecisionOut"] | null;
-            /** Hidden */
-            hidden: boolean;
+        /** ReturnBaselineOut */
+        ReturnBaselineOut: {
+            source: components["schemas"]["BaselineSource"];
+            /** Median Days */
+            median_days: number;
+            /** Spread Days */
+            spread_days: number;
+            /** Intervals */
+            intervals: number;
         };
-        /** ReengagementOut */
-        ReengagementOut: {
-            book: components["schemas"]["BookOut"];
+        /** ReturnEvidenceOut */
+        ReturnEvidenceOut: {
+            status: components["schemas"]["ReturnStatus"];
+            /**
+             * Last Purchase
+             * Format: date
+             */
+            last_purchase: string;
+            /** Gap Days */
+            gap_days: number;
+            /** Purchase Days */
+            purchase_days: number;
+            baseline: components["schemas"]["ReturnBaselineOut"] | null;
+            thresholds: components["schemas"]["ReturnThresholdsOut"] | null;
+            /** Ratio */
+            ratio: number | null;
             /** Rule Version */
             rule_version: string;
-            /** Entries */
-            entries: components["schemas"]["ReengageEntryOut"][];
-            /** Hidden Count */
-            hidden_count: number;
         };
         /**
          * ReturnStatus
          * @enum {string}
          */
         ReturnStatus: "normal" | "watch" | "at_risk" | "lapsed" | "insufficient_history" | "not_repeat";
-        /** RulesOut */
-        RulesOut: {
-            /** Segments Version */
-            segments_version: string;
-            /** Window Days */
-            window_days: number;
-            /** New Days */
-            new_days: number;
-            /** Loyal Min Tx */
-            loyal_min_tx: number;
-            /** Loyal Min Span Days */
-            loyal_min_span_days: number;
-            /** High Value Quantile */
-            high_value_quantile: number;
-            /** Min Customers */
-            min_customers: number;
-            /** Winback Version */
-            winback_version: string;
-            /** Min Personal Intervals */
-            min_personal_intervals: number;
-            /** Min Pooled Intervals */
-            min_pooled_intervals: number;
-            /** Watch Ratio */
-            watch_ratio: number;
-            /** At Risk Ratio */
-            at_risk_ratio: number;
-            /** Lapsed Ratio */
-            lapsed_ratio: number;
-            /** K Watch */
-            k_watch: number;
-            /** K Risk */
-            k_risk: number;
-            /** Watch Min Days */
-            watch_min_days: number;
-            /** At Risk Min Days */
-            at_risk_min_days: number;
-            /** Lapsed Min Days */
-            lapsed_min_days: number;
+        /** ReturnThresholdsOut */
+        ReturnThresholdsOut: {
+            /** Watch Days */
+            watch_days: number;
+            /** At Risk Days */
+            at_risk_days: number;
+            /** Lapsed Days */
+            lapsed_days: number;
         };
         /**
          * Segment
          * @enum {string}
          */
         Segment: "new" | "one_time" | "active" | "loyal" | "at_risk" | "lapsed";
-        /** SegmentRowOut */
-        SegmentRowOut: {
-            /** Customers */
-            customers: number;
-            /** Transactions */
-            transactions: number;
-            accepted_value: components["schemas"]["MoneyOut"];
-            segment: components["schemas"]["Segment"];
-            value_share: components["schemas"]["RateOut"];
-        };
         /** SeriesPointOut */
         SeriesPointOut: {
             /**
@@ -1057,27 +1390,11 @@ export interface components {
         };
         /** SimulationOut */
         SimulationOut: {
-            baseline: components["schemas"]["app__contexts__simulation__api__router__BaselineOut"];
+            baseline: components["schemas"]["BaselineOut"];
             assumptions: components["schemas"]["AssumptionsOut"];
             projection: components["schemas"]["ProjectionOut"];
             monthly_goal: components["schemas"]["MoneyOut"] | null;
             goal_gap: components["schemas"]["MoneyOut"] | null;
-        };
-        /** StatusCountOut */
-        StatusCountOut: {
-            status: components["schemas"]["TransactionStatus"];
-            /** Count */
-            count: number;
-            amount: components["schemas"]["MoneyOut"];
-        };
-        /** StatusRowOut */
-        StatusRowOut: {
-            /** Customers */
-            customers: number;
-            /** Transactions */
-            transactions: number;
-            accepted_value: components["schemas"]["MoneyOut"];
-            status: components["schemas"]["ReturnStatus"];
         };
         /** StatusSummaryOut */
         StatusSummaryOut: {
@@ -1103,15 +1420,6 @@ export interface components {
          * @enum {string}
          */
         Suggestion: "service_follow_up" | "general_offer" | "no_action_yet" | "low_priority_offer";
-        /** ThresholdsOut */
-        ThresholdsOut: {
-            /** Watch Days */
-            watch_days: number;
-            /** At Risk Days */
-            at_risk_days: number;
-            /** Lapsed Days */
-            lapsed_days: number;
-        };
         /**
          * Tone
          * @enum {string}
@@ -1179,28 +1487,6 @@ export interface components {
             occurrences: number;
             total: components["schemas"]["BucketOut"];
             average_amount_per_day: components["schemas"]["MoneyOut"] | null;
-        };
-        /** BaselineOut */
-        app__contexts__customers__api__router__BaselineOut: {
-            source: components["schemas"]["BaselineSource"];
-            /** Median Days */
-            median_days: number;
-            /** Spread Days */
-            spread_days: number;
-            /** Intervals */
-            intervals: number;
-        };
-        /** BaselineOut */
-        app__contexts__simulation__api__router__BaselineOut: {
-            period: components["schemas"]["PeriodOut"];
-            /** Total Count */
-            total_count: number;
-            /** Accepted Count */
-            accepted_count: number;
-            /** Acceptance Share */
-            acceptance_share: number;
-            average_ticket: components["schemas"]["MoneyOut"];
-            gross_collection: components["schemas"]["MoneyOut"];
         };
     };
     responses: never;
@@ -1758,7 +2044,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["OverviewOut"];
+                    "application/json": components["schemas"]["CustomerOverviewOut"];
                 };
             };
             /** @description Validation Error */
@@ -1792,7 +2078,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ReengagementOut"];
+                    "application/json": components["schemas"]["CustomerReengagementOut"];
                 };
             };
             /** @description Validation Error */
@@ -1892,7 +2178,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DecisionIn"];
+                "application/json": components["schemas"]["CustomerDecisionIn"];
             };
         };
         responses: {
@@ -1902,7 +2188,206 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["DecisionOut"];
+                    "application/json": components["schemas"]["CustomerDecisionOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_program_api_v1_loyalty_program_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoyaltyProgramStateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_program_api_v1_loyalty_program_put: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoyaltyProgramIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoyaltyProgramOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_simulations_api_v1_loyalty_simulations_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoyaltySimulationRunOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_simulation_api_v1_loyalty_simulations_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoyaltySimulationIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoyaltySimulationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    accrue_api_v1_loyalty_ledger_accrue_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoyaltyAccrualOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ledger_api_v1_loyalty_ledger_get: {
+        parameters: {
+            query?: {
+                page?: number;
+                size?: number;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LoyaltyLedgerOut"];
                 };
             };
             /** @description Validation Error */

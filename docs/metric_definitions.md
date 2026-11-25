@@ -61,6 +61,26 @@ Single-purchase customers are "not repeat" (no rhythm to drift from). Suggestion
 high value → personal follow-up; at-risk → general offer; watch → no action yet (re-check date shown);
 lapsed → low-priority offer. Nothing is sent automatically.
 
+**Loyalty Rewards Studio (`loyalty/domain/`)**: hypothetical programme, assumptions shown next to results.
+| Quantity | Definition |
+|---|---|
+| Points (per accepted, tokenised tx) | `floor(amount / 100 DZD) × points_per_100` if amount ≥ minimum spend; capped per customer per version |
+| Reward rate | `points_per_100 × point_value / 100 DZD` (face value returned per DZD) |
+| Baseline S | accepted value of tokenised customers in the window (default 90 days) |
+| Points issued P(u) | Σ customers `min(cap, floor(points_c × (1 + u)))`: uplift spread proportionally |
+| Reward liability | P(u) × point value (face value) |
+| Expected reward cost | redemption rate × liability (redemption is an **assumption**) |
+| Reward cost on existing sales | redemption rate × P(0) × point value: rewards paid on sales you already had |
+| Total cost | reward cost + fixed campaign cost |
+| Gross contribution | margin × u × S, **only** with a merchant-entered margin |
+| Net scenario contribution | gross contribution − total cost. A scenario result, not accounting profit |
+| Break-even uplift | smallest u ≤ 1000 % with margin × u × S ≥ redemption × P(u) × point value + fixed cost (0.1-pt grid, then bisection to 0.1 ‰); also as extra DZD and extra transactions at the average ticket |
+
+**Pilot points ledger**: immutable entries; balance = Σ entries. Idempotency key `earn:v{version}:{transaction_id}`
+(unique per merchant in the database), so re-runs, re-imports and retries never double-reward. Expiry writes
+an `expire` entry once `expiry_days` pass. Refunds never reverse points (no reliable refund→sale link).
+Redemptions are not in the data, so they exist only as a simulator assumption.
+
 **Numerical safeguards**
 - Money is stored as integer centimes and converted with `Decimal`, ROUND_HALF_UP. The API returns
   `{amount: "123.45", centimes: 12345}`. The frontend only formats the value; it never computes with it.

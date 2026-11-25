@@ -3,6 +3,7 @@ import { AlertsPage } from "@/features/alerts/AlertsPage";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { CollectionsPage } from "@/features/collections/CollectionsPage";
 import { CustomersPage } from "@/features/customers/CustomersPage";
+import { LoyaltyPage } from "@/features/loyalty/LoyaltyPage";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { InsightsPage } from "@/features/insights/InsightsPage";
 import { ProfilePage } from "@/features/merchant/ProfilePage";
@@ -24,6 +25,7 @@ export const router = createBrowserRouter([
       { path: "simulator", element: <SimulatorPage /> },
       { path: "insights", element: <InsightsPage /> },
       { path: "customers", element: <CustomersPage /> },
+      { path: "loyalty", element: <LoyaltyPage /> },
       { path: "profile", element: <ProfilePage /> },
     ],
   },
