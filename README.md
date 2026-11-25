@@ -1,11 +1,15 @@
-# Merchant Pay: Intelligent Merchant Financial Management
+# CEO-Pay: Intelligent Merchant Financial Management
 
-> **FINOVIA × ENSM × SATIM challenge.** A merchant-facing web app that turns electronic payment
+> **FINOVIA × ENSM × SATIM *Merchant Pay* challenge.** CEO-Pay is a merchant-facing web app that turns electronic payment
 > records into reliable collection visibility, explainable alerts and transparent growth scenarios.
 
 **Design thesis:** make the financial core *boringly correct* and the intelligence *unusually
 honest*. Every KPI reconciles with the ledger, every alert shows its evidence, and every scenario
 shows its assumptions. Full specification: [`docs/blueprint.pdf`](docs/blueprint.pdf).
+
+*Naming:* the product is **CEO-Pay**; the challenge is *Merchant Pay*. Technical identifiers keep the
+original name (`merchantpay` database, `@merchantpay.test` demo accounts, package names) so existing
+volumes, scripts and lockfiles keep working.
 
 ## Contents
 1. [Quickstart](#1-quickstart)

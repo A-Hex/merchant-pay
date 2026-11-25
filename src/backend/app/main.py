@@ -16,7 +16,7 @@ from app.shared.api.errors import register_error_handlers
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    app = FastAPI(title="Merchant Pay API", version="0.1.0",
+    app = FastAPI(title="CEO-Pay API", version="0.1.0",
                   docs_url="/api/docs", openapi_url="/api/openapi.json")
     app.add_middleware(CORSMiddleware, allow_origins=settings.cors_origins,
                        allow_credentials=True, allow_methods=["*"], allow_headers=["*"])

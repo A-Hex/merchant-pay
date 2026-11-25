@@ -1,4 +1,4 @@
-import { ChevronsUpDownIcon, CircleUserIcon, LandmarkIcon, LanguagesIcon, LogOutIcon } from "lucide-react";
+import { ChevronsUpDownIcon, CircleUserIcon, LanguagesIcon, LogOutIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router";
 import { PageTransition } from "@/components/motion";
@@ -78,9 +78,7 @@ function AppSidebar({ side }: { side: "left" | "right" }) {
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" render={<NavLink to="/" />}>
-              <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                <LandmarkIcon className="size-4" />
-              </div>
+              <img src="/favicon.svg" alt="" aria-hidden className="aspect-square size-8 rounded-lg" />
               <div className="grid flex-1 text-start text-sm leading-tight">
                 <span className="truncate font-semibold">{t("app.name")}</span>
                 <span className="truncate text-xs text-muted-foreground">{me?.merchant.display_name}</span>

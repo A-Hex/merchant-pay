@@ -1,5 +1,5 @@
 {
-  "app": { "name": "Merchant Pay", "tagline": "إدارة ذكية لمداخيلك الإلكترونية" },
+  "app": { "name": "CEO-Pay", "tagline": "إدارة ذكية لمداخيلك الإلكترونية" },
   "nav": {
     "dashboard": "لوحة القيادة", "transactions": "المعاملات", "collections": "التحصيلات",
     "alerts": "التنبيهات", "simulator": "المحاكي", "insights": "التحليلات", "profile": "الملف التجاري", "customers": "الزبائن", "loyalty": "الوفاء"

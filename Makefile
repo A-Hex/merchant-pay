@@ -1,4 +1,4 @@
-# Merchant Pay - common tasks. Run from the repository root.
+# CEO-Pay - common tasks. Run from the repository root.
 BACK := src/backend
 FRONT := src/frontend
 

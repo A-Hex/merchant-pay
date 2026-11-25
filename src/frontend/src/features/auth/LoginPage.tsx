@@ -1,4 +1,4 @@
-import { EyeIcon, EyeOffIcon, LandmarkIcon, LoaderCircleIcon, LockIcon, MailIcon } from "lucide-react";
+import { EyeIcon, EyeOffIcon, LoaderCircleIcon, LockIcon, MailIcon } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -27,9 +27,7 @@ export function LoginPage() {
     <div className="flex min-h-svh">
       <div className="relative hidden w-1/2 flex-col justify-between overflow-hidden bg-zinc-950 lg:flex">
         <div className="relative z-20 flex items-center gap-2.5 p-8">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-white text-black">
-            <LandmarkIcon className="size-4" />
-          </div>
+          <img src="/favicon.svg" alt="" aria-hidden className="size-8 rounded-lg" />
           <span className="text-sm font-semibold text-white">{t("app.name")}</span>
         </div>
         <div className="absolute inset-0 flex items-center justify-center"><NetworkMotif /></div>
@@ -50,9 +48,7 @@ export function LoginPage() {
         </div>
         <motion.div className="w-full max-w-sm" variants={containerVariants} initial="hidden" animate="visible">
           <motion.div className="mb-8 flex flex-col items-center lg:hidden" variants={itemVariants}>
-            <div className="flex size-10 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <LandmarkIcon className="size-5" />
-            </div>
+            <img src="/favicon.svg" alt="" aria-hidden className="size-10 rounded-xl" />
           </motion.div>
           <motion.div className="text-center" variants={itemVariants}>
             <h1 className="text-2xl font-semibold tracking-tight">{t("auth.welcome")}</h1>

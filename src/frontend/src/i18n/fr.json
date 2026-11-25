@@ -1,5 +1,5 @@
 {
-  "app": { "name": "Merchant Pay", "tagline": "Pilotage intelligent de vos encaissements" },
+  "app": { "name": "CEO-Pay", "tagline": "Pilotage intelligent de vos encaissements" },
   "nav": {
     "dashboard": "Tableau de bord", "transactions": "Transactions", "collections": "Encaissements",
     "alerts": "Alertes", "simulator": "Simulateur", "insights": "Analyses", "profile": "Profil", "customers": "Clients", "loyalty": "Fidélité"
