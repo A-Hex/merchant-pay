@@ -1540,6 +1540,7 @@ export interface components {
             assumptions: components["schemas"]["AssumptionsOut"];
             projection: components["schemas"]["ProjectionOut"];
             monthly_goal: components["schemas"]["MoneyOut"] | null;
+            goal_for_period: components["schemas"]["MoneyOut"] | null;
             goal_gap: components["schemas"]["MoneyOut"] | null;
         };
         /** StatusSummaryOut */

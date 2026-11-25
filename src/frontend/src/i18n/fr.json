@@ -141,7 +141,8 @@
     "delta": "Écart d'encaissement",
     "assumptions": "Hypothèses utilisées",
     "goal": "Objectif mensuel",
-    "goalGap": "Écart à l'objectif",
+    "goalForPeriod": "Objectif ramené à la période",
+    "goalGap": "Écart à l'objectif de la période",
     "notForecast": "Projection arithmétique sur une base observée : ni saisonnalité ni incertitude ne sont modélisées.",
     "empty": "Aucune projection calculée pour cette période.",
     "error": "La période de référence ne contient aucun encaissement accepté : choisissez une autre période."

@@ -54,7 +54,8 @@ class SimulationOut(BaseModel):
     assumptions: AssumptionsOut
     projection: ProjectionOut
     monthly_goal: MoneyOut | None
-    goal_gap: MoneyOut | None  # projection - goal; positive means the goal is covered
+    goal_for_period: MoneyOut | None  # monthly goal x baseline days / 30
+    goal_gap: MoneyOut | None  # projection - goal_for_period; positive means the goal pace is covered
 
 
 @router.post("/growth", response_model=SimulationOut)
@@ -95,6 +96,7 @@ def growth(
             delta_pct=float(p.delta_pct) if p.delta_pct is not None else None,
         ),
         monthly_goal=MoneyOut.of(r.monthly_goal) if r.monthly_goal else None,
+        goal_for_period=MoneyOut.of(r.goal_for_period) if r.goal_for_period is not None else None,
         goal_gap=MoneyOut.of(r.goal_gap) if r.goal_gap is not None else None,
     )
 

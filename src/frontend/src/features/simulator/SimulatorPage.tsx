@@ -142,6 +142,7 @@ function Result({ r }: { r: Simulation }) {
           <Row label={t("simulator.acceptanceShort")} value={points(r.assumptions.acceptance_change)} />
           <Row label={t("simulator.ticketShort")} value={formatPct(r.assumptions.ticket_change, true)} />
           {r.monthly_goal && <Row label={t("simulator.goal")} value={formatMoney(r.monthly_goal)} />}
+          {r.goal_for_period && <Row label={t("simulator.goalForPeriod")} value={formatMoney(r.goal_for_period)} />}
           {r.goal_gap && <Row label={t("simulator.goalGap")} value={formatMoney(r.goal_gap)} />}
         </dl>
         <p className="mt-3 text-xs text-muted-foreground">{t("simulator.notForecast")}</p>

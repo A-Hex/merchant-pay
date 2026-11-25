@@ -50,11 +50,18 @@ class SimulationResult:
     monthly_goal: Money | None
 
     @property
+    def goal_for_period(self) -> Money | None:
+        """The monthly goal pro-rated to the baseline length (goal x days / 30), so the comparison below
+        is like-for-like. Comparing a 14-day projection with a full month was a category error (FIN-001)."""
+        return goal_for_period(self.monthly_goal, self.baseline_period)
+
+    @property
     def goal_gap(self) -> Money | None:
-        """Projected collection minus the monthly goal: positive means the goal is covered."""
-        if self.monthly_goal is None:
+        """Projected collection minus the pro-rated goal: positive means the goal pace is covered."""
+        goal = self.goal_for_period
+        if goal is None:
             return None
-        return self.projection.projected_collection - self.monthly_goal
+        return self.projection.projected_collection - goal
 
 
 class RunGrowthSimulation:

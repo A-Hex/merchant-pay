@@ -62,3 +62,14 @@ def test_simulation_uses_only_the_callers_merchant(login):
 
 def test_unauthenticated_is_rejected(client):
     assert client.post(f"{API}/simulations/growth", json=BASE).status_code == 401
+
+
+def test_goal_gap_compares_like_for_like_periods(login):
+    """FIN-001: a 15-day projection is compared with half the monthly goal, never the full month."""
+    c = login()
+    c.patch("/api/v1/merchant/me", json={"monthly_goal_centimes": 3_000_000})  # 30,000.00 DZD / month
+    s = c.post("/api/v1/simulations/growth", json={"baseline_from": "2026-11-06", "baseline_to": "2026-11-20",
+                                                  "volume_growth": 0.15}).json()
+    assert s["monthly_goal"]["amount"] == "30000.00"
+    assert s["goal_for_period"]["amount"] == "15000.00"  # 15 days of a 30-day month
+    assert s["goal_gap"]["centimes"] == s["projection"]["projected_collection"]["centimes"] - 1_500_000
