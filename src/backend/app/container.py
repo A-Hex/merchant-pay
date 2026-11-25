@@ -64,6 +64,7 @@ from app.contexts.loyalty.infrastructure.sql_repositories import (
     SqlProgramRepository,
     SqlSimulationRunRepository,
 )
+from app.contexts.reports.application.use_cases import GenerateCollectionsReport
 from app.contexts.simulation.application.run_simulation import RunGrowthSimulation, RunScenarioLab
 from app.contexts.simulation.infrastructure.sql_scenario_repository import SqlScenarioRunRepository
 from app.db.session import make_engine, make_session_factory
@@ -310,3 +311,10 @@ def get_accrue_pilot_uc(programs=Depends(get_program_repository), ledger=Depends
 def get_ledger_uc(programs=Depends(get_program_repository),
                   ledger=Depends(get_ledger_repository)) -> GetLedger:
     return GetLedger(programs, ledger)
+
+
+# ---- reports (aggregated, merchant-scoped exports) ----------------------------------------------
+def get_collections_report_uc(repo=Depends(get_transaction_repository),
+                              merchants: SqlMerchantRepository = Depends(get_merchant_repository),
+                              audit=Depends(get_audit_log)) -> GenerateCollectionsReport:
+    return GenerateCollectionsReport(repo, merchants, audit)

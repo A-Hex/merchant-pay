@@ -10,6 +10,7 @@ from app.contexts.identity.api.router import router as identity_router
 from app.contexts.identity.infrastructure.login_throttle import LoginThrottle
 from app.contexts.ledger.api.router import router as ledger_router
 from app.contexts.loyalty.api.router import router as loyalty_router
+from app.contexts.reports.api.router import router as reports_router
 from app.contexts.simulation.api.router import router as simulation_router
 from app.shared.api.errors import register_error_handlers
 from app.shared.api.security import SecurityMiddleware
@@ -35,6 +36,7 @@ def create_app() -> FastAPI:
     api.include_router(simulation_router)
     api.include_router(customers_router)
     api.include_router(loyalty_router)
+    api.include_router(reports_router)
     app.include_router(api)
 
     @app.get("/health", tags=["ops"])

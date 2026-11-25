@@ -432,6 +432,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/collections-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Preview */
+        get: operations["preview_api_v1_reports_collections_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/collections-summary.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pdf */
+        get: operations["pdf_api_v1_reports_collections_summary_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/collections-summary.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Csv */
+        get: operations["csv_api_v1_reports_collections_summary_csv_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -599,6 +650,46 @@ export interface components {
             count_share: components["schemas"]["RateOut"];
             accepted_amount: components["schemas"]["MoneyOut"];
             amount_share: components["schemas"]["RateOut"];
+        };
+        /** CollectionsReportOut */
+        CollectionsReportOut: {
+            /** Merchant Id */
+            merchant_id: string;
+            /** Merchant Name */
+            merchant_name: string;
+            period: components["schemas"]["PeriodOut"];
+            previous_period: components["schemas"]["PeriodOut"];
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Currency
+             * @default DZD
+             */
+            currency: string;
+            /** Synthetic */
+            synthetic: boolean;
+            /** Provenance */
+            provenance: components["schemas"]["ReportProvenanceOut"][];
+            gross_collected: components["schemas"]["MoneyOut"];
+            /** Collected Change Pct */
+            collected_change_pct: number | null;
+            /** Collected Change Kind */
+            collected_change_kind: string;
+            /** Accepted Count */
+            accepted_count: number;
+            acceptance_rate: components["schemas"]["RateOut"];
+            average_ticket: components["schemas"]["MoneyOut"] | null;
+            /** Statuses */
+            statuses: components["schemas"]["ReportStatusOut"][];
+            /** Channels */
+            channels: components["schemas"]["ReportChannelOut"][];
+            /** Pdf Filename */
+            pdf_filename: string;
+            /** Csv Filename */
+            csv_filename: string;
         };
         /** CollectionsSummaryOut */
         CollectionsSummaryOut: {
@@ -1447,6 +1538,31 @@ export interface components {
             denominator: number;
             /** Value */
             value: number | null;
+        };
+        /** ReportChannelOut */
+        ReportChannelOut: {
+            channel: components["schemas"]["Channel"];
+            /** Count */
+            count: number;
+            count_share: components["schemas"]["RateOut"];
+            accepted_amount: components["schemas"]["MoneyOut"];
+            amount_share: components["schemas"]["RateOut"];
+        };
+        /** ReportProvenanceOut */
+        ReportProvenanceOut: {
+            origin: components["schemas"]["DataOrigin"];
+            /** Transactions */
+            transactions: number;
+        };
+        /** ReportStatusOut */
+        ReportStatusOut: {
+            status: components["schemas"]["TransactionStatus"];
+            /** Count */
+            count: number;
+            amount: components["schemas"]["MoneyOut"];
+            /** Previous Count */
+            previous_count: number;
+            previous_amount: components["schemas"]["MoneyOut"];
         };
         /** ReturnBaselineOut */
         ReturnBaselineOut: {
@@ -2571,6 +2687,104 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["LoyaltyLedgerOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    preview_api_v1_reports_collections_summary_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CollectionsReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pdf_api_v1_reports_collections_summary_pdf_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    csv_api_v1_reports_collections_summary_csv_get: {
+        parameters: {
+            query?: {
+                date_from?: string | null;
+                date_to?: string | null;
+            };
+            header?: {
+                "x-merchant-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
